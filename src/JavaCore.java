@@ -4,7 +4,6 @@ import java.util.*;
 
 /**
  * Core Java – pre-OOP
- * Interview-oriented organization using small methods.
  */
 public class JavaCore {
 
@@ -75,7 +74,7 @@ public class JavaCore {
     };
 
     /* ===============================
-       INTERVIEW ENTRY METHOD
+       ENTRY METHOD
        =============================== */
     public void executeValues() {
         demonstrateArrays();
