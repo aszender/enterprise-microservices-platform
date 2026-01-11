@@ -1,4 +1,5 @@
-package src;
+package basic;
+
 import java.util.IntSummaryStatistics;
 import java.util.List;
 import java.util.Map;

@@ -1,4 +1,4 @@
-package src;
+package basic;
 
 import java.util.*;
 

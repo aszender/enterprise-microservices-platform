@@ -1,12 +1,11 @@
 import java.util.Scanner;
-import src.JavaCore;
-import src.oop;
-import src.oop.*;
-import src.oop2;
-import src.oop3;
-import src.lambda8;
-import src.streams8;
-import src.OptionalExample;
+import basic.JavaCore;
+import basic.oop;
+import basic.oop2;
+import basic.oop3;
+import basic.lambda8;
+import basic.streams8;
+import basic.OptionalExample;
 
 public class App {
     public static void main(String[] args) {
@@ -28,7 +27,7 @@ public class App {
         oopDemo.demonstrateEqualsHashCode();
 
         // Individual animal creation example
-        Animal myDog = oopDemo.new Dog("Max", 5, "Labrador");
+        oop.Animal myDog = oopDemo.new Dog("Max", 5, "Labrador");
         System.out.println("\n=== Individual Animal Example ===");
         myDog.makeSound();
         myDog.move();

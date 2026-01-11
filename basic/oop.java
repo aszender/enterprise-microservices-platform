@@ -1,4 +1,5 @@
-package src;
+package basic;
+
 import java.util.Objects;
 
 public class oop {

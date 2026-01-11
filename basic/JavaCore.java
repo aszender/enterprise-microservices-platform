@@ -1,4 +1,4 @@
-package src;
+package basic;
 
 import java.util.*;
 
@@ -186,6 +186,7 @@ public class JavaCore {
     private void demonstrateExceptions() {
         try {
             int error = 10 / 0;
+            System.out.println(error);
         } catch (ArithmeticException e) {
             System.out.println("Division by zero handled");
         }

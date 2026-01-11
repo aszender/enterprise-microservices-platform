@@ -1,11 +1,9 @@
-package src;
+package basic;
+
 import java.util.Optional;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.Instant;
-import java.time.ZoneId;
-import java.time.format.DateTimeFormatter;
-import java.util.Date;
 
 public class OptionalExample {
     String name;
