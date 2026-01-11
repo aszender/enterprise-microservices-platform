@@ -4,7 +4,9 @@ import src.oop;
 import src.oop.*;
 import src.oop2;
 import src.oop3;
-import src.oop2;
+import src.lambda8;
+import src.streams8;
+import src.OptionalExample;
 
 public class App {
     public static void main(String[] args) {
@@ -38,5 +40,21 @@ public class App {
         // Generics, Exceptions, Immutability, Lifecycle (other file)
         oop3 more = new oop3();
         more.demonstrateAll();
+
+        // Lambda Expressions (Java 8+)
+        System.out.println("\n=== Lambda Expressions Demo ===");
+        lambda8 lambdaDemo = new lambda8();
+        lambdaDemo.demostrateLambda();
+
+        // Streams API (Java 8+)
+        System.out.println("\n=== Streams API Demo ===");
+        streams8 streamsDemo = new streams8();
+        streamsDemo.demostrateStreams();
+
+        // Optional & Time APIs (Java 8+)
+        System.out.println("\n=== Optional & Time APIs Demo ===");
+        OptionalExample optionalDemo = new OptionalExample();
+        optionalDemo.demonstrateOptional();
+        optionalDemo.demonstrateTimeAPIs();
     }
 }

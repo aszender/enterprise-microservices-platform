@@ -189,6 +189,10 @@ public class oop {
         Animal dog = new Dog("Buddy", 3, "Golden Retriever");
         Animal cat = new Cat("Whiskers", 2, true);
 
+        dog.makeSound();
+        cat.makeSound();
+
+        //is not a best practice to downcast like this, just for demonstration
         if (dog instanceof Dog){ // Checking actual object type
             Dog myDog = (Dog) dog; // Downcasting
             System.out.println("\n=== Dog Specific Actions ===");
