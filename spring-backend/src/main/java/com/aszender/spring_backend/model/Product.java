@@ -19,6 +19,10 @@ public class Product {
     @Column(nullable = false)
     private Double price;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "category_id")
+    private Categories category;
+
     // Required by JPA
     public Product() {
     }
@@ -60,4 +64,5 @@ public class Product {
     public void setPrice(Double price) {
         this.price = price;
     }
+
 }

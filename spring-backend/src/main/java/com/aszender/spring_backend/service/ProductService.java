@@ -1,7 +1,11 @@
 package com.aszender.spring_backend.service;
 
+import com.aszender.spring_backend.exception.ProductNotFoundException;
 import com.aszender.spring_backend.model.Product;
 import com.aszender.spring_backend.repository.ProductRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.Optional;
@@ -14,21 +18,49 @@ public class ProductService {
         this.productRepository = productRepository;
     }
 
-    public List<Product> getAllProducts() {
+    public List<Product> findAll() {
         return productRepository.findAll();
     }
 
-    public Optional<Product> getProductById(Long id) {
+    public List<Product> findAll(Sort sort) {
+        return productRepository.findAll(sort);
+    }
+
+    public Page<Product> findAll(Pageable pageable) {
+        return productRepository.findAll(pageable);
+    }
+
+    public Optional<Product> findById(Long id) {
         return productRepository.findById(id);
     }
 
-    public Product createProduct(Product product) {
+    public Product save(Product product) {
         return productRepository.save(product);
+    }
+
+    public boolean existsById(Long id) {
+        return productRepository.existsById(id);
+    }
+
+    public void deleteById(Long id) {
+        productRepository.deleteById(id);
+    }
+
+    public List<Product> getAllProducts() {
+        return findAll();
+    }
+
+    public Optional<Product> getProductById(Long id) {
+        return findById(id);
+    }
+
+    public Product createProduct(Product product) {
+        return save(product);
     }
 
     public Product updateProduct(Long id, Product productDetails) {
         Product product = productRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Product not found"));
+                .orElseThrow(() -> new ProductNotFoundException(id));
 
         product.setName(productDetails.getName());
         product.setDescription(productDetails.getDescription());
@@ -38,7 +70,7 @@ public class ProductService {
     }
 
     public void deleteProduct(Long id) {
-        productRepository.deleteById(id);
+        deleteById(id);
     }
 
     public List<Product> searchProducts(String keyword) {
