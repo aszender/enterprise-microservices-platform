@@ -34,6 +34,7 @@ async function toHttpError(response) {
 
 async function requestJson(url, options) {
   const res = await fetch(url, {
+    credentials: options?.credentials ?? 'include',
     headers: {
       'Content-Type': 'application/json',
       ...(options?.headers ?? {}),
