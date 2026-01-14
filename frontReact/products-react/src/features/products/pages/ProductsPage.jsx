@@ -5,9 +5,11 @@ import { RefreshCw } from 'lucide-react'
 import ProductForm from '../components/ProductForm'
 import ProductList from '../components/ProductList'
 import { useProducts } from '../hooks/useProducts'
-import { Button } from '../../../shared/ui'
+import { Button, Card, CardContent, CardHeader, CardTitle, Input, Label } from '../../../shared/ui'
+import { useAuth } from '../../auth/hooks/useAuth'
 
 export default function ProductsPage() {
+  const auth = useAuth()
   const {
     items: products,
     errorMessage,
@@ -41,6 +43,64 @@ export default function ProductsPage() {
           {errorMessage}
         </p>
       )}
+
+      {/* Auth (JWT) */}
+      <Card className="mb-6">
+        <CardHeader>
+          <CardTitle>Authentication</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {auth.errorMessage && (
+            <p className="mb-3 rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive">
+              {auth.errorMessage}
+            </p>
+          )}
+
+          {auth.isAuthenticated ? (
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div className="text-sm text-muted-foreground">
+                Logged in as{' '}
+                <span className="font-medium text-foreground">{auth.username || 'user'}</span>
+                {auth.role ? <span className="text-muted-foreground"> ({auth.role})</span> : null}
+              </div>
+              <Button variant="outline" onClick={auth.logout}>
+                Logout
+              </Button>
+            </div>
+          ) : (
+            <div className="grid gap-4 sm:grid-cols-3 sm:items-end">
+              <div className="grid gap-2">
+                <Label htmlFor="login-username">Username</Label>
+                <Input
+                  id="login-username"
+                  value={auth.form.username}
+                  onChange={(e) => auth.onChange('username', e.target.value)}
+                  placeholder="admin"
+                  autoComplete="username"
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="login-password">Password</Label>
+                <Input
+                  id="login-password"
+                  type="password"
+                  value={auth.form.password}
+                  onChange={(e) => auth.onChange('password', e.target.value)}
+                  placeholder="admin123"
+                  autoComplete="current-password"
+                />
+              </div>
+              <Button disabled={auth.loading} onClick={auth.login}>
+                {auth.loading ? 'Signing in…' : 'Login'}
+              </Button>
+            </div>
+          )}
+
+          <p className="mt-3 text-xs text-muted-foreground">
+            Creating, updating, and deleting products requires a JWT.
+          </p>
+        </CardContent>
+      </Card>
 
       {busy && !products.length && (
         <p className="mb-4 text-sm text-muted-foreground">Loading…</p>

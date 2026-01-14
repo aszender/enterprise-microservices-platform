@@ -2836,6 +2836,157 @@ record RegisterRequest(
 
 ---
 
+## ✅ REAL PROJECT FLOW (THIS REPO): JWT IN A HttpOnly COOKIE
+
+In this repo we implemented **JWT auth using an HttpOnly cookie** instead of returning a token to the frontend and storing it in `localStorage`.
+
+### Why “HttpOnly cookie” changes the mental model
+
+- With **`Authorization: Bearer <token>`**, the frontend code “holds” the token and attaches it to requests.
+- With an **HttpOnly cookie**, the browser holds the token and automatically attaches it to requests.
+
+That means:
+
+- The frontend **does NOT read the JWT** (JavaScript cannot access HttpOnly cookies).
+- The frontend **does NOT manually set** `Authorization: Bearer ...`.
+- The frontend must send requests with **cookies enabled**.
+
+### JWT storage options in browsers (tradeoffs)
+
+| Where the token lives | Good | Risk / downside |
+|---|---|---|
+| `localStorage` | Simple | High XSS impact (token can be stolen by JS) |
+| `sessionStorage` | Clears on tab close | Still readable by JS → still XSS risk |
+| In-memory (JS variable) | Best XSS posture among JS options | Refresh loses auth; needs refresh-token strategy |
+| HttpOnly cookie | JS cannot read token (strong vs XSS theft) | Needs CSRF strategy for browser requests |
+
+### Backend endpoints (current behavior)
+
+- `POST /api/auth/login`
+    - Validates username/password
+    - Generates JWT
+    - Responds with:
+        - `Set-Cookie: access_token=<JWT>; HttpOnly; Path=/; SameSite=Lax; Max-Age=...`
+- `GET /api/auth/me`
+    - Returns current user info **if** the cookie/JWT is valid
+- `POST /api/auth/logout`
+    - Clears the cookie by sending `Set-Cookie: access_token=; Max-Age=0; ...`
+
+### Browser flow (what actually happens)
+
+1) **Login**
+     - Frontend sends `POST /api/auth/login`
+     - Server replies with `Set-Cookie: access_token=...`
+     - Browser stores the cookie
+
+2) **Later requests**
+     - Browser automatically sends:
+         - `Cookie: access_token=...`
+     - The backend reads the cookie and authenticates the request
+
+### Frontend requirement (React/Vue)
+
+When calling the API from fetch/axios, ensure cookies are included:
+
+```js
+fetch('/api/products', {
+    method: 'POST',
+    credentials: 'include',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name: 'Keyboard', description: 'Mechanical', price: 99.9 }),
+})
+```
+
+If you forget `credentials: 'include'` (especially in cross-origin setups), the cookie won’t be sent and you’ll see `401 Unauthorized`.
+
+### Filter behavior (cookie-first + Bearer fallback)
+
+Our JWT filter resolves the token from:
+
+1) `Cookie: access_token=...` (primary)
+2) `Authorization: Bearer ...` (fallback, useful for Postman/mobile clients)
+
+---
+
+## CSRF (Cross-Site Request Forgery) — WHY IT MATTERS WITH COOKIES
+
+**CSRF** is when a malicious site tricks a user’s browser into sending a request to your API **while the user is logged in**.
+
+Key point:
+
+- Cookies are **automatically attached** by the browser.
+- So cookie-based auth needs a CSRF story for **state-changing** endpoints (POST/PUT/PATCH/DELETE).
+
+Important note:
+
+- Many REST tutorials do `.csrf(csrf -> csrf.disable())` because they assume **non-browser** clients (mobile/CLI/Postman) that send tokens in the `Authorization` header.
+- For a **browser app using cookies for auth**, disabling CSRF is usually not what you want (unless you rely on a very strict same-site model and fully understand the tradeoffs).
+
+### Common mitigations (from simple → stronger)
+
+1) **SameSite cookies** (you’re using `SameSite=Lax`)
+     - Blocks many cross-site requests
+     - Not a full solution for every scenario
+
+2) **CSRF token** (recommended for “cookie auth”)
+     - Example pattern: *double-submit cookie*
+         - Backend sets `XSRF-TOKEN` cookie (NOT HttpOnly)
+         - Frontend echoes it in a header: `X-XSRF-TOKEN`
+         - Backend verifies header token matches cookie token
+
+3) **BFF pattern** (often simplest operationally)
+     - Browser talks only to BFF (same-origin)
+     - BFF holds tokens server-side
+     - CSRF becomes clearer and CORS disappears for the browser
+
+---
+
+## BFF (Backend For Frontend) — WHAT IT IS
+
+A **BFF** is a backend made for a specific frontend.
+
+Instead of:
+
+```
+Browser  -->  Spring API
+```
+
+You do:
+
+```
+Browser  -->  BFF  -->  Spring API
+```
+
+### Why BFF is “more advanced” for SPAs
+
+- The browser only has a **BFF session cookie** (HttpOnly)
+- Access/refresh tokens (OIDC) can be stored **server-side**
+- Browser never needs to understand or store tokens
+- CORS is simpler (browser only calls one origin)
+
+---
+
+## OIDC (OpenID Connect) — WHAT IT ADDS ON TOP OF JWT
+
+Important distinction:
+
+- **JWT** is a *token format* (how the token looks).
+- **OIDC** is a *standard login protocol* (how users log in and how tokens are issued/validated).
+
+With OIDC you typically use an external Identity Provider (IdP) such as Auth0/Okta/Azure AD/Keycloak.
+
+### Typical “best practice” evolution for real products
+
+- Use an **external OIDC provider** (IdP) instead of rolling your own username/password auth
+- Use **short-lived access tokens** (minutes)
+- Use **refresh token rotation** (detect replay)
+- Choose either:
+    - **SPA direct** (OIDC + PKCE in the browser) → more frontend complexity
+    - **OIDC + BFF** (recommended for “best-of-the-best” browser security) → browser has only a session cookie
+
+
+---
+
 ## ✅ BLOCK 2 CHECKLIST
 - [ ] I understand JWT structure (header, payload, signature)
 - [ ] I can create a JWT utility class

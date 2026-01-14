@@ -3,6 +3,8 @@
 
 export async function requestJson(url, options) {
   const res = await fetch(url, {
+    // Cookie-based auth (HttpOnly JWT) requires credentials.
+    credentials: options?.credentials ?? 'include',
     headers: {
       'Content-Type': 'application/json',
       ...(options?.headers ?? {}),
