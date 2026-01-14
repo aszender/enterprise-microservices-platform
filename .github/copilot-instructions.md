@@ -1,75 +1,31 @@
-# Java Spring Learning Repository - Copilot Instructions
+# Java + Spring + Frontend Learning Repo (AI Agent Guide)
 
-## Project Purpose
-This is a **Java fundamentals and OOP learning repository** preparing for a Java/Spring interview (Impact.com, Jan 16, 2026). It demonstrates core Java concepts through practical examples, not production code.
+This repo is a learning workspace for Java/Spring interview prep (Jan 2026). It’s a monorepo with multiple small projects; changes should stay simple and demo-focused.
 
-## Architecture & Structure
+## Repo Map (what lives where)
+- Java fundamentals + OOP demos: [App.java](../App.java) + [basic/](../basic/)
+- Spring Boot REST API (Products): [spring-backend/](../spring-backend/)
+- Vue 3 UI that talks to Spring API via Vite proxy: [frontVUE/products-ui/](../frontVUE/products-ui/)
+- React Vite starter (currently template): [frontReact/products-react/](../frontReact/products-react/)
+- Vanilla JS/TS practice scripts: [frontVainilla/](../frontVainilla/)
 
-### Core Components
-- **`App.java`** - Entry point; demonstrates interop between modules
-  - Imports `JavaCore` (fundamental concepts) and `oop` (OOP patterns)
-  - Uses `Scanner` for user input (String parsing to primitives)
-  - Creates nested inner class instances (`new oop().new Dog()`)
-  
-- **`src/JavaCore.java`** - Pre-OOP fundamentals (208 lines)
-  - Organized by concept with clear section headers: PRIMITIVES, ARRAYS, COLLECTIONS, SWITCH, LOOPS, EXCEPTIONS
-  - Single `executeValues()` entry method chains demonstrations in order
-  - Demonstrates distinctions: `==` vs `.equals()`, pass-by-value semantics, ArrayList vs Arrays
+## Key Data Flow (Products app)
+- Backend endpoints: [ProductController](../spring-backend/src/main/java/com/aszender/spring_backend/controller/ProductController.java)
+  - Base path: `/api/products` (CRUD + `/search?keyword=...`)
+- Vue UI calls the API through a tiny fetch client: [productsApi.js](../frontVUE/products-ui/src/api/productsApi.js)
+  - Dev proxy lives in: [vite.config.js](../frontVUE/products-ui/vite.config.js) (`/api` → `http://localhost:8080`)
+- Error shape comes from: [GlobalExceptionHandler](../spring-backend/src/main/java/com/aszender/spring_backend/exception/GlobalExceptionHandler.java)
 
-- **`src/oop.java`** - OOP patterns via nested inner classes
-  - `Animal` base class with constructor, getters, `toString()` override, abstract-like `makeSound()`
-  - `Dog` extends `Animal`, overrides `makeSound()` showing inheritance/polymorphism
+## Workflows (per subproject)
+- Java demos (root): `javac App.java basic/*.java && java App`
+- Spring backend: `cd spring-backend && ./mvnw spring-boot:run` (Java 17, Spring Boot 4)
+- Spring tests: `cd spring-backend && ./mvnw test` (currently just `contextLoads`)
+- Vue UI: `cd frontVUE/products-ui && npm install && npm run dev`
+- React UI: `cd frontReact/products-react && npm install && npm run dev`
 
-### Key Conventions
-1. **Method organization** - Each demonstration isolated in private method; no complex control flow
-2. **Printed output** - All concepts print to stdout; no assertions or unit tests
-3. **Package structure** - `src.*` packages; classes imported at entry point
-4. **Nested classes** - Inner classes used for OOP demos, instantiated as `new oop().new Dog()`
-
-## Developer Workflows
-
-### Running Code
-```bash
-# Compile all Java files (IntelliJ/VS Code Java extension handles this)
-javac App.java src/*.java
-
-# Run entry point
-java App
-```
-
-### Debugging
-- Use VS Code Java extension breakpoints in `App.java` or `src/JavaCore.java`
-- Debug session configured (see git history: recent debug commits)
-- Focus on `executeValues()` flow to trace concept demonstrations
-
-### Test Strategy
-- **No automated tests** - Learning repo focused on manual verification of printed output
-- Verify output by inspecting console logs when running `App.java`
-
-## Common Patterns & Anti-Patterns
-
-### DO:
-- Add demonstrations as **private methods** in `JavaCore` following existing sections
-- Use **section headers** (`/* === CONCEPT NAME === */`) to organize code
-- Call new methods from `executeValues()` to integrate into flow
-- Use **generic types** in collections: `List<String>`, `Map<String, Integer>`
-- Override `toString()` and use descriptive output for verification
-
-### DON'T:
-- Add complex business logic - keep demonstrations isolated and simple
-- Use static methods for demonstrations (keep state in instance fields)
-- Add external dependencies - stick to `java.util.*` and Java 17 stdlib
-- Create separate test files - append demonstrations to existing classes
-
-## Interview Preparation Context
-This repo covers **7-day crash course** (see `Study_Plan.md`):
-- Days 1-2: Java Core (this repo's focus)
-- Days 3-4: Java 8+ features (Lambdas, Streams, Optional) - extend existing patterns
-- Days 5-7: Spring Framework (new repo likely needed)
-
-When extending: prioritize demonstrating Java concepts used in Spring (Generics, Interfaces, Inheritance).
-
-## File References for Key Patterns
-- Exception handling: [JavaCore.java#L180-L186](src/JavaCore.java#L180-L186)
-- Collection iteration: [JavaCore.java#L108-L130](src/JavaCore.java#L108-L130)
-- Inheritance/Polymorphism: [oop.java#L28-L36](src/oop.java#L28-L36)
+## Conventions to follow (project-specific)
+- Java demo code in [basic/JavaCore.java](../basic/JavaCore.java): keep concepts isolated in small private methods and call them from `executeValues()`.
+- OOP demos use nested inner classes in [basic/oop.java](../basic/oop.java) (instantiate like `new oop().new Dog(...)` from [App.java](../App.java)).
+- Spring REST layer uses DTOs + mapping helpers inside the controller (see `toDto` / `toEntity` in ProductController) instead of returning JPA entities directly.
+- Spring uses in-memory H2 by default (see [application.properties](../spring-backend/src/main/resources/application.properties)); keep changes compatible with that.
+- Vue UI state is centralized in a small singleton store (no Pinia): [productsStore.js](../frontVUE/products-ui/src/stores/productsStore.js) + composable [useProducts.js](../frontVUE/products-ui/src/composables/useProducts.js).

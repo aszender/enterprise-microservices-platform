@@ -17,7 +17,7 @@ const user = {
     age: 30,
 };
 const {name: userName, age: userAge} = user;
-console.log(`Name: ${userName}, Age: ${userAge}`);
+console.log(`Name: ${userName}, Age: ${userAge}`)
 
 // Array Methods with Arrow Functions
 const numbers = [1,2,3,4,5];
@@ -27,6 +27,8 @@ const evens = numbers.filter(n => n % 2 === 0);
 console.log(evens);
 const sum = numbers.reduce((acc, n) => acc + n, 0);
 console.log(sum);
+const newArr = [...numbers, 6,7,8];
+console.log(newArr);
 
 // Rest and Spread Operators
 const nums = [10,20,30,40,50];
