@@ -2,6 +2,7 @@ package com.aszender.orders.service;
 
 import com.aszender.orders.dto.CreateOrderRequest;
 import com.aszender.orders.exception.OrderNotFoundException;
+import com.aszender.orders.inventory.InventoryClient;
 import com.aszender.orders.kafka.publish.OrderEventsPublisher;
 import com.aszender.orders.model.Order;
 import com.aszender.orders.model.OrderItem;
@@ -19,10 +20,16 @@ public class OrderService {
 
     private final OrderRepository orderRepository;
     private final OrderEventsPublisher orderEventsPublisher;
+    private final InventoryClient inventoryClient;
 
-    public OrderService(OrderRepository orderRepository, OrderEventsPublisher orderEventsPublisher) {
+    public OrderService(
+            OrderRepository orderRepository,
+            OrderEventsPublisher orderEventsPublisher,
+            InventoryClient inventoryClient
+    ) {
         this.orderRepository = orderRepository;
         this.orderEventsPublisher = orderEventsPublisher;
+        this.inventoryClient = inventoryClient;
     }
 
     public List<Order> findAll() {
@@ -73,26 +80,57 @@ public class OrderService {
     }
 
     @Transactional
+    public Order reserveStock(Long id) {
+        Order order = findById(id);
+
+        if (order.getStatus() == OrderStatus.RESERVED) {
+            return order;
+        }
+        if (order.getStatus() == OrderStatus.CANCELLED) {
+            return order;
+        }
+
+        InventoryClient.ReserveResponse reserveResponse = inventoryClient.reserve(order.getId(), order.getItems());
+        OrderStatus previous = order.getStatus();
+
+        if (reserveResponse.reserved()) {
+            order.setStatus(OrderStatus.RESERVED);
+        } else {
+            order.setStatus(OrderStatus.CANCELLED);
+        }
+
+        Order saved = orderRepository.save(order);
+        publishCancelledIfNeeded(previous, saved.getStatus(), saved);
+        return saved;
+    }
+
+    @Transactional
     public Order updateStatus(Long id, OrderStatus status) {
         Order order = findById(id);
         OrderStatus previous = order.getStatus();
         order.setStatus(status);
         Order saved = orderRepository.save(order);
 
-        boolean becameCancelled = previous != OrderStatus.CANCELLED && status == OrderStatus.CANCELLED;
-        if (becameCancelled) {
-            if (TransactionSynchronizationManager.isActualTransactionActive()) {
-                TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
-                    @Override
-                    public void afterCommit() {
-                        orderEventsPublisher.publishOrderCancelled(saved);
-                    }
-                });
-            } else {
-                orderEventsPublisher.publishOrderCancelled(saved);
-            }
-        }
+        publishCancelledIfNeeded(previous, status, saved);
 
         return saved;
+    }
+
+    private void publishCancelledIfNeeded(OrderStatus previous, OrderStatus next, Order saved) {
+        boolean becameCancelled = previous != OrderStatus.CANCELLED && next == OrderStatus.CANCELLED;
+        if (!becameCancelled) {
+            return;
+        }
+
+        if (TransactionSynchronizationManager.isActualTransactionActive()) {
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                @Override
+                public void afterCommit() {
+                    orderEventsPublisher.publishOrderCancelled(saved);
+                }
+            });
+        } else {
+            orderEventsPublisher.publishOrderCancelled(saved);
+        }
     }
 }

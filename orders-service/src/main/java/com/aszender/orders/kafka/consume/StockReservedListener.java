@@ -1,8 +1,6 @@
 package com.aszender.orders.kafka.consume;
 
 import com.aszender.orders.kafka.events.StockReservedEvent;
-import com.aszender.orders.model.OrderStatus;
-import com.aszender.orders.service.OrderService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
@@ -15,10 +13,7 @@ public class StockReservedListener {
 
     private static final Logger log = LoggerFactory.getLogger(StockReservedListener.class);
 
-    private final OrderService orderService;
-
-    public StockReservedListener(OrderService orderService) {
-        this.orderService = orderService;
+    public StockReservedListener() {
     }
 
     @KafkaListener(
@@ -30,9 +25,5 @@ public class StockReservedListener {
     )
     public void onStockReserved(StockReservedEvent event) {
         log.info("Received StockReservedEvent: {}", event);
-        if (event == null || event.orderId() == null) {
-            return;
-        }
-        orderService.updateStatus(event.orderId(), OrderStatus.RESERVED);
     }
 }

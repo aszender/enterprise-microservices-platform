@@ -67,4 +67,10 @@ public class OrderController {
         Order updated = orderService.updateStatus(id, status);
         return ResponseEntity.ok(toDto(updated));
     }
+
+    @PostMapping("/{id}/reserve")
+    public ResponseEntity<OrderResponse> reserveStock(@PathVariable Long id) {
+        Order updated = orderService.reserveStock(id);
+        return ResponseEntity.ok(toDto(updated));
+    }
 }
