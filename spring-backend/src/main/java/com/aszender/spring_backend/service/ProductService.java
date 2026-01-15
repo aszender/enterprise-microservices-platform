@@ -3,6 +3,10 @@ package com.aszender.spring_backend.service;
 import com.aszender.spring_backend.exception.ProductNotFoundException;
 import com.aszender.spring_backend.model.Product;
 import com.aszender.spring_backend.repository.ProductRepository;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.CachePut;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -18,6 +22,7 @@ public class ProductService {
         this.productRepository = productRepository;
     }
 
+    @Cacheable(cacheNames = "productsAll", key = "'all'")
     public List<Product> findAll() {
         return productRepository.findAll();
     }
@@ -30,10 +35,18 @@ public class ProductService {
         return productRepository.findAll(pageable);
     }
 
+    @Cacheable(cacheNames = "productsById", key = "#id", unless = "#result == null || #result.isEmpty()")
     public Optional<Product> findById(Long id) {
         return productRepository.findById(id);
     }
 
+    @Caching(
+            put = @CachePut(cacheNames = "productsById", key = "#result.id", unless = "#result == null || #result.id == null"),
+            evict = {
+                    @CacheEvict(cacheNames = "productsAll", allEntries = true),
+                    @CacheEvict(cacheNames = "productsSearch", allEntries = true)
+            }
+    )
     public Product save(Product product) {
         return productRepository.save(product);
     }
@@ -42,6 +55,11 @@ public class ProductService {
         return productRepository.existsById(id);
     }
 
+    @Caching(evict = {
+            @CacheEvict(cacheNames = "productsById", key = "#id"),
+            @CacheEvict(cacheNames = "productsAll", allEntries = true),
+            @CacheEvict(cacheNames = "productsSearch", allEntries = true)
+    })
     public void deleteById(Long id) {
         productRepository.deleteById(id);
     }
@@ -66,13 +84,14 @@ public class ProductService {
         product.setDescription(productDetails.getDescription());
         product.setPrice(productDetails.getPrice());
 
-        return productRepository.save(product);
+        return save(product);
     }
 
     public void deleteProduct(Long id) {
         deleteById(id);
     }
 
+    @Cacheable(cacheNames = "productsSearch", key = "#keyword == null ? '' : #keyword.toLowerCase()")
     public List<Product> searchProducts(String keyword) {
         return productRepository.findByNameContainingIgnoreCase(keyword);
     }
