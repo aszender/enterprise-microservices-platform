@@ -30,7 +30,7 @@ public class KafkaProductEventsPublisher implements ProductEventsPublisher {
                 product.getId(),
                 product.getName(),
                 product.getPrice(),
-                Instant.now()
+                Instant.now().toString()
         );
 
         kafkaTemplate.send(topic, String.valueOf(product.getId()), event);
