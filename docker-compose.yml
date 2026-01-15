@@ -1,0 +1,21 @@
+services:
+  spring-backend:
+    build:
+      context: ./spring-backend
+    container_name: spring-backend
+    environment:
+      # Optional: override if you want a different port inside container
+      - SERVER_PORT=8080
+    expose:
+      - "8080"
+
+  nginx:
+    image: nginx:1.27-alpine
+    container_name: spring-backend-nginx
+    depends_on:
+      - spring-backend
+    ports:
+      # Public entrypoint: Nginx on host
+      - "8080:80"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
