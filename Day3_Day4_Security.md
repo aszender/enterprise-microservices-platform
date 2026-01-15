@@ -2569,6 +2569,96 @@ HMACSHA256(
 
 ## JWT Implementation
 
+### Quick Minimal JWT (Bearer) — from scratch (copy/paste checklist)
+
+Corrected sentence:
+“Give me the steps to implement JWT in Spring Boot in the simplest way from scratch.”
+
+What we are building (minimal):
+
+1. Login endpoint: `POST /api/auth/login`
+2. Validate username/password
+3. Return a signed JWT
+4. Client calls protected endpoints with `Authorization: Bearer <token>`
+5. A Spring Security filter validates the token on every request
+
+Minimal steps:
+
+1) Add dependencies (`spring-boot-starter-security` + `jjwt-*`) — see below.
+
+2) Configure Spring Security (no `WebSecurityConfigurerAdapter`):
+
+```java
+@Configuration
+@EnableWebSecurity
+public class SecurityConfig {
+
+    @Bean
+    SecurityFilterChain securityFilterChain(HttpSecurity http, JwtAuthenticationFilter jwtFilter) throws Exception {
+        http
+            .csrf(csrf -> csrf.disable())
+            .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+            .authorizeHttpRequests(auth -> auth
+                .requestMatchers("/api/auth/**").permitAll()
+                .anyRequest().authenticated()
+            )
+            .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
+
+        return http.build();
+    }
+}
+```
+
+3) Create a JWT utility/service (`JwtUtil`) to:
+- `generateToken(username)`
+- `extractUsername(token)`
+- `validateToken(token, userDetails)`
+
+4) Create a request filter (`JwtAuthenticationFilter extends OncePerRequestFilter`) that:
+- reads the `Authorization` header
+- extracts the token after `Bearer `
+- validates it
+- sets `SecurityContextHolder.getContext().setAuthentication(...)`
+
+5) Create a login endpoint (`AuthController`):
+
+```java
+@RestController
+@RequestMapping("/api/auth")
+public class AuthController {
+
+    @PostMapping("/login")
+    public Map<String, String> login(@RequestBody LoginRequest request) {
+        // Minimal demo only (hardcoded creds)
+        if ("admin".equals(request.username()) && "1234".equals(request.password())) {
+            String token = jwtUtil.generateToken(/* username */ request.username());
+            return Map.of("token", token);
+        }
+        throw new RuntimeException("Invalid credentials");
+    }
+}
+
+record LoginRequest(String username, String password) {}
+```
+
+6) Test flow:
+
+```http
+POST /api/auth/login
+Content-Type: application/json
+
+{ "username": "admin", "password": "1234" }
+```
+
+Then call a protected endpoint:
+
+```http
+GET /api/products
+Authorization: Bearer <TOKEN>
+```
+
+Stop point: below you’ll find the more “real project” version using `AuthenticationManager`, `UserDetailsService`, and (in this repo) the HttpOnly-cookie approach.
+
 ### Dependencies
 ```xml
 <dependency>
