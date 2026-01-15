@@ -10,6 +10,13 @@
 /Users/aszender/VSCProyects/java-spring/orders-service/src/main/java/com/aszender/orders/exception/ApiErrorResponse.java
 /Users/aszender/VSCProyects/java-spring/orders-service/src/main/java/com/aszender/orders/exception/GlobalExceptionHandler.java
 /Users/aszender/VSCProyects/java-spring/orders-service/src/main/java/com/aszender/orders/exception/OrderNotFoundException.java
+/Users/aszender/VSCProyects/java-spring/orders-service/src/main/java/com/aszender/orders/kafka/KafkaEnableConfig.java
+/Users/aszender/VSCProyects/java-spring/orders-service/src/main/java/com/aszender/orders/kafka/consume/ProductCreatedListener.java
+/Users/aszender/VSCProyects/java-spring/orders-service/src/main/java/com/aszender/orders/kafka/events/OrderCreatedEvent.java
+/Users/aszender/VSCProyects/java-spring/orders-service/src/main/java/com/aszender/orders/kafka/events/ProductCreatedEvent.java
+/Users/aszender/VSCProyects/java-spring/orders-service/src/main/java/com/aszender/orders/kafka/publish/KafkaOrderEventsPublisher.java
+/Users/aszender/VSCProyects/java-spring/orders-service/src/main/java/com/aszender/orders/kafka/publish/NoOpOrderEventsPublisher.java
+/Users/aszender/VSCProyects/java-spring/orders-service/src/main/java/com/aszender/orders/kafka/publish/OrderEventsPublisher.java
 /Users/aszender/VSCProyects/java-spring/orders-service/src/main/java/com/aszender/orders/model/Order.java
 /Users/aszender/VSCProyects/java-spring/orders-service/src/main/java/com/aszender/orders/model/OrderItem.java
 /Users/aszender/VSCProyects/java-spring/orders-service/src/main/java/com/aszender/orders/model/OrderStatus.java

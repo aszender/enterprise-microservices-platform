@@ -2,12 +2,15 @@ package com.aszender.orders.service;
 
 import com.aszender.orders.dto.CreateOrderRequest;
 import com.aszender.orders.exception.OrderNotFoundException;
+import com.aszender.orders.kafka.publish.OrderEventsPublisher;
 import com.aszender.orders.model.Order;
 import com.aszender.orders.model.OrderItem;
 import com.aszender.orders.model.OrderStatus;
 import com.aszender.orders.repository.OrderRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.util.List;
 
@@ -15,9 +18,11 @@ import java.util.List;
 public class OrderService {
 
     private final OrderRepository orderRepository;
+    private final OrderEventsPublisher orderEventsPublisher;
 
-    public OrderService(OrderRepository orderRepository) {
+    public OrderService(OrderRepository orderRepository, OrderEventsPublisher orderEventsPublisher) {
         this.orderRepository = orderRepository;
+        this.orderEventsPublisher = orderEventsPublisher;
     }
 
     public List<Order> findAll() {
@@ -50,7 +55,21 @@ public class OrderService {
         order.setTotal(total);
         order.setStatus(OrderStatus.CREATED);
 
-        return orderRepository.save(order);
+        Order saved = orderRepository.save(order);
+
+        // Publish only after the transaction commits, so we don't emit events for rolled-back writes.
+        if (TransactionSynchronizationManager.isActualTransactionActive()) {
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                @Override
+                public void afterCommit() {
+                    orderEventsPublisher.publishOrderCreated(saved);
+                }
+            });
+        } else {
+            orderEventsPublisher.publishOrderCreated(saved);
+        }
+
+        return saved;
     }
 
     @Transactional
