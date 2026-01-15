@@ -1,12 +1,16 @@
 package com.aszender.inventory.kafka.consume;
 
 import com.aszender.inventory.kafka.events.OrderCancelledEvent;
+import com.aszender.inventory.kafka.events.StockReleasedEvent;
+import com.aszender.inventory.kafka.publish.StockEventsPublisher;
 import com.aszender.inventory.service.InventoryService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
+
+import java.time.Instant;
 
 @Component
 @Profile("kafka")
@@ -15,9 +19,11 @@ public class OrderCancelledListener {
     private static final Logger log = LoggerFactory.getLogger(OrderCancelledListener.class);
 
     private final InventoryService inventoryService;
+    private final StockEventsPublisher stockEventsPublisher;
 
-    public OrderCancelledListener(InventoryService inventoryService) {
+    public OrderCancelledListener(InventoryService inventoryService, StockEventsPublisher stockEventsPublisher) {
         this.inventoryService = inventoryService;
+        this.stockEventsPublisher = stockEventsPublisher;
     }
 
     @KafkaListener(
@@ -33,6 +39,9 @@ public class OrderCancelledListener {
             return;
         }
 
-        inventoryService.releaseReservation(event.orderId());
+        boolean released = inventoryService.releaseReservation(event.orderId());
+        if (released) {
+            stockEventsPublisher.publishStockReleased(new StockReleasedEvent(event.orderId(), Instant.now()));
+        }
     }
 }

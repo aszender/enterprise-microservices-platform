@@ -1,6 +1,7 @@
 package com.aszender.inventory.kafka.publish;
 
 import com.aszender.inventory.kafka.events.StockReservationFailedEvent;
+import com.aszender.inventory.kafka.events.StockReleasedEvent;
 import com.aszender.inventory.kafka.events.StockReservedEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,15 +18,18 @@ public class KafkaStockEventsPublisher implements StockEventsPublisher {
 
     private final KafkaTemplate<String, Object> kafkaTemplate;
     private final String stockReservedTopic;
+    private final String stockReleasedTopic;
     private final String stockReservationFailedTopic;
 
     public KafkaStockEventsPublisher(
             KafkaTemplate<String, Object> kafkaTemplate,
             @Value("${app.kafka.topics.stock-reserved}") String stockReservedTopic,
+            @Value("${app.kafka.topics.stock-released}") String stockReleasedTopic,
             @Value("${app.kafka.topics.stock-reservation-failed}") String stockReservationFailedTopic
     ) {
         this.kafkaTemplate = kafkaTemplate;
         this.stockReservedTopic = stockReservedTopic;
+        this.stockReleasedTopic = stockReleasedTopic;
         this.stockReservationFailedTopic = stockReservationFailedTopic;
     }
 
@@ -33,6 +37,12 @@ public class KafkaStockEventsPublisher implements StockEventsPublisher {
     public void publishStockReserved(StockReservedEvent event) {
         log.info("Publishing StockReservedEvent to {}: {}", stockReservedTopic, event);
         kafkaTemplate.send(stockReservedTopic, event.orderId().toString(), event);
+    }
+
+    @Override
+    public void publishStockReleased(StockReleasedEvent event) {
+        log.info("Publishing StockReleasedEvent to {}: {}", stockReleasedTopic, event);
+        kafkaTemplate.send(stockReleasedTopic, event.orderId().toString(), event);
     }
 
     @Override
