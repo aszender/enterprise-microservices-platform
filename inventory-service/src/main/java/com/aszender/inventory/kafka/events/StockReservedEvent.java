@@ -1,11 +1,11 @@
-package com.aszender.orders.kafka.events;
+package com.aszender.inventory.kafka.events;
 
 import java.time.Instant;
 import java.util.List;
 
-public record OrderCreatedEvent(
+public record StockReservedEvent(
         Long orderId,
-        Instant createdAt,
+        Instant reservedAt,
         List<OrderItemEvent> items
 ) {
 }

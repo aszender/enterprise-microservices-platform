@@ -17,4 +17,10 @@ public class NoOpOrderEventsPublisher implements OrderEventsPublisher {
         // Intentionally no-op. Keeps local/tests running without Kafka.
         log.debug("Kafka profile disabled; not publishing OrderCreatedEvent for orderId={}", order.getId());
     }
+
+    @Override
+    public void publishOrderCancelled(Order order) {
+        // Intentionally no-op. Keeps local/tests running without Kafka.
+        log.debug("Kafka profile disabled; not publishing OrderCancelledEvent for orderId={}", order.getId());
+    }
 }

@@ -75,7 +75,24 @@ public class OrderService {
     @Transactional
     public Order updateStatus(Long id, OrderStatus status) {
         Order order = findById(id);
+        OrderStatus previous = order.getStatus();
         order.setStatus(status);
-        return orderRepository.save(order);
+        Order saved = orderRepository.save(order);
+
+        boolean becameCancelled = previous != OrderStatus.CANCELLED && status == OrderStatus.CANCELLED;
+        if (becameCancelled) {
+            if (TransactionSynchronizationManager.isActualTransactionActive()) {
+                TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                    @Override
+                    public void afterCommit() {
+                        orderEventsPublisher.publishOrderCancelled(saved);
+                    }
+                });
+            } else {
+                orderEventsPublisher.publishOrderCancelled(saved);
+            }
+        }
+
+        return saved;
     }
 }

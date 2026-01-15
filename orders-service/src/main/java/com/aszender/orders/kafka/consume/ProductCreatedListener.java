@@ -8,7 +8,7 @@ import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
 
 @Component
-@Profile("kafka")
+@Profile("kafka-products")
 public class ProductCreatedListener {
 
     private static final Logger log = LoggerFactory.getLogger(ProductCreatedListener.class);
