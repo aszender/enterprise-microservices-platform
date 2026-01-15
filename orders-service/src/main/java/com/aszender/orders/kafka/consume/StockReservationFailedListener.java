@@ -1,6 +1,8 @@
 package com.aszender.orders.kafka.consume;
 
 import com.aszender.orders.kafka.events.StockReservationFailedEvent;
+import com.aszender.orders.kafka.inbox.KafkaInboxService;
+import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
@@ -13,7 +15,10 @@ public class StockReservationFailedListener {
 
     private static final Logger log = LoggerFactory.getLogger(StockReservationFailedListener.class);
 
-    public StockReservationFailedListener() {
+    private final KafkaInboxService inboxService;
+
+    public StockReservationFailedListener(KafkaInboxService inboxService) {
+        this.inboxService = inboxService;
     }
 
     @KafkaListener(
@@ -23,7 +28,10 @@ public class StockReservationFailedListener {
                     "spring.json.value.default.type=com.aszender.orders.kafka.events.StockReservationFailedEvent"
             }
     )
-    public void onStockReservationFailed(StockReservationFailedEvent event) {
+    public void onStockReservationFailed(StockReservationFailedEvent event, ConsumerRecord<String, StockReservationFailedEvent> record) {
+        if (!inboxService.tryConsume(record)) {
+            return;
+        }
         log.info("Received StockReservationFailedEvent: {}", event);
     }
 }

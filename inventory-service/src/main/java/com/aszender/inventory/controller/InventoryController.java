@@ -1,14 +1,12 @@
 package com.aszender.inventory.controller;
 
-import com.aszender.inventory.kafka.events.OrderItemEvent;
-import com.aszender.inventory.kafka.events.StockReservationFailedEvent;
 import com.aszender.inventory.kafka.events.StockReleasedEvent;
-import com.aszender.inventory.kafka.events.StockReservedEvent;
 import com.aszender.inventory.kafka.publish.StockEventsPublisher;
 import com.aszender.inventory.model.StockItem;
 import com.aszender.inventory.model.StockReservation;
 import com.aszender.inventory.repository.StockItemRepository;
 import com.aszender.inventory.repository.StockReservationRepository;
+import com.aszender.inventory.service.InventoryReservationOrchestrator;
 import com.aszender.inventory.service.InventoryService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
@@ -27,17 +25,20 @@ public class InventoryController {
     private final StockItemRepository stockItemRepository;
     private final StockReservationRepository stockReservationRepository;
     private final InventoryService inventoryService;
+    private final InventoryReservationOrchestrator reservationOrchestrator;
     private final StockEventsPublisher stockEventsPublisher;
 
     public InventoryController(
             StockItemRepository stockItemRepository,
             StockReservationRepository stockReservationRepository,
             InventoryService inventoryService,
+            InventoryReservationOrchestrator reservationOrchestrator,
             StockEventsPublisher stockEventsPublisher
     ) {
         this.stockItemRepository = stockItemRepository;
         this.stockReservationRepository = stockReservationRepository;
         this.inventoryService = inventoryService;
+        this.reservationOrchestrator = reservationOrchestrator;
         this.stockEventsPublisher = stockEventsPublisher;
     }
 
@@ -78,47 +79,29 @@ public class InventoryController {
         ) {
         }
 
-        @PostMapping("/reservations")
-        public ResponseEntity<ReserveResponse> reserve(@Valid @RequestBody ReserveRequest request) {
-        boolean reserved = inventoryService.reserveStock(
+    @PostMapping("/reservations")
+    public ResponseEntity<ReserveResponse> reserve(@Valid @RequestBody ReserveRequest request) {
+        InventoryReservationOrchestrator.ReserveResult result = reservationOrchestrator.reserve(
             request.orderId(),
             request.items().stream()
-                .map(i -> new InventoryService.ReservationLine(i.productId(), i.quantity()))
+                .map(i -> new InventoryReservationOrchestrator.ReserveLine(i.productId(), i.quantity()))
                 .toList()
         );
 
-        if (reserved) {
-            stockEventsPublisher.publishStockReserved(new StockReservedEvent(
-                request.orderId(),
-                Instant.now(),
-                request.items().stream()
-                    .map(i -> new OrderItemEvent(i.productId(), i.quantity()))
-                    .toList()
-            ));
+        return ResponseEntity.ok(new ReserveResponse(result.reserved(), result.reason()));
+    }
 
-            return ResponseEntity.ok(new ReserveResponse(true, null));
-        }
-
-        stockEventsPublisher.publishStockReservationFailed(new StockReservationFailedEvent(
-            request.orderId(),
-            Instant.now(),
-            "INSUFFICIENT_STOCK"
-        ));
-
-        return ResponseEntity.ok(new ReserveResponse(false, "INSUFFICIENT_STOCK"));
-        }
-
-        public record ReleaseResponse(
+    public record ReleaseResponse(
             boolean released
         ) {
         }
 
-        @DeleteMapping("/reservations/{orderId}")
-        public ResponseEntity<ReleaseResponse> release(@PathVariable Long orderId) {
+    @DeleteMapping("/reservations/{orderId}")
+    public ResponseEntity<ReleaseResponse> release(@PathVariable Long orderId) {
         boolean released = inventoryService.releaseReservation(orderId);
         if (released) {
             stockEventsPublisher.publishStockReleased(new StockReleasedEvent(orderId, Instant.now()));
         }
         return ResponseEntity.ok(new ReleaseResponse(released));
-        }
+    }
 }

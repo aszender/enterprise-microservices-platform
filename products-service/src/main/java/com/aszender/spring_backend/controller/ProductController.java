@@ -2,7 +2,10 @@ package com.aszender.spring_backend.controller;
 
 import com.aszender.spring_backend.dto.PRequestDTO;
 import com.aszender.spring_backend.dto.PResponseDTO;
+import com.aszender.spring_backend.dto.StockStatusDTO;
 import com.aszender.spring_backend.model.Product;
+import com.aszender.spring_backend.model.ProductStockStatus;
+import com.aszender.spring_backend.repository.ProductStockStatusRepository;
 import com.aszender.spring_backend.service.ProductService;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -21,9 +24,11 @@ import java.util.Objects;
 public class ProductController {
 
     private final ProductService productService;
+    private final ProductStockStatusRepository stockStatusRepository;
 
-    public ProductController(ProductService productService) {
+    public ProductController(ProductService productService, ProductStockStatusRepository stockStatusRepository) {
         this.productService = productService;
+        this.stockStatusRepository = stockStatusRepository;
     }
 
     private static PResponseDTO toDto(Product product) {
@@ -104,6 +109,29 @@ public class ProductController {
                 .map(ProductController::toDto)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
+    }
+
+    // GET product stock status (projection from inventory low-stock events)
+    @GetMapping("/{id}/stock-status")
+    public ResponseEntity<StockStatusDTO> getProductStockStatus(@PathVariable Long id) {
+        if (!productService.existsById(id)) {
+            return ResponseEntity.notFound().build();
+        }
+
+        return stockStatusRepository.findById(id)
+                .map(ProductController::toDto)
+                .map(ResponseEntity::ok)
+                .orElseGet(() -> ResponseEntity.ok(new StockStatusDTO(id, null, null, false, null)));
+    }
+
+    private static StockStatusDTO toDto(ProductStockStatus status) {
+        return new StockStatusDTO(
+                status.getProductId(),
+                status.getAvailable(),
+                status.getThreshold(),
+                status.isLowStock(),
+                status.getUpdatedAt()
+        );
     }
 
     // POST - Create product

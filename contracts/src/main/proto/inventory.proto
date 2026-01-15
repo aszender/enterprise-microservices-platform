@@ -1,0 +1,27 @@
+syntax = "proto3";
+
+package com.aszender.inventory.v1;
+
+option java_multiple_files = true;
+option java_package = "com.aszender.contracts.inventory.v1";
+option java_outer_classname = "InventoryProto";
+
+// Synchronous decision boundary: Orders -> Inventory
+service InventoryService {
+  rpc ReserveStock(ReserveStockRequest) returns (ReserveStockResponse);
+}
+
+message ReserveStockRequest {
+  int64 order_id = 1;
+  repeated ReserveItem items = 2;
+}
+
+message ReserveItem {
+  int64 product_id = 1;
+  int32 quantity = 2;
+}
+
+message ReserveStockResponse {
+  bool reserved = 1;
+  string reason = 2;
+}

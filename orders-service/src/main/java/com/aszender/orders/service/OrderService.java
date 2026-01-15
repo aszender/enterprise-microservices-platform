@@ -2,7 +2,7 @@ package com.aszender.orders.service;
 
 import com.aszender.orders.dto.CreateOrderRequest;
 import com.aszender.orders.exception.OrderNotFoundException;
-import com.aszender.orders.inventory.InventoryClient;
+import com.aszender.orders.inventory.GrpcInventoryClient;
 import com.aszender.orders.kafka.publish.OrderEventsPublisher;
 import com.aszender.orders.model.Order;
 import com.aszender.orders.model.OrderItem;
@@ -20,12 +20,12 @@ public class OrderService {
 
     private final OrderRepository orderRepository;
     private final OrderEventsPublisher orderEventsPublisher;
-    private final InventoryClient inventoryClient;
+    private final GrpcInventoryClient inventoryClient;
 
     public OrderService(
             OrderRepository orderRepository,
             OrderEventsPublisher orderEventsPublisher,
-            InventoryClient inventoryClient
+            GrpcInventoryClient inventoryClient
     ) {
         this.orderRepository = orderRepository;
         this.orderEventsPublisher = orderEventsPublisher;
@@ -90,7 +90,7 @@ public class OrderService {
             return order;
         }
 
-        InventoryClient.ReserveResponse reserveResponse = inventoryClient.reserve(order.getId(), order.getItems());
+        GrpcInventoryClient.ReserveResponse reserveResponse = inventoryClient.reserve(order.getId(), order.getItems());
         OrderStatus previous = order.getStatus();
 
         if (reserveResponse.reserved()) {

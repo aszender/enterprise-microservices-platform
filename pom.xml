@@ -12,6 +12,7 @@
   <packaging>pom</packaging>
 
   <modules>
+    <module>contracts</module>
     <module>products-service</module>
     <module>orders-service</module>
     <module>inventory-service</module>

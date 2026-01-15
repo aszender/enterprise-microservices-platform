@@ -1,6 +1,7 @@
 package com.aszender.spring_backend.controller;
 
 import com.aszender.spring_backend.model.Product;
+import com.aszender.spring_backend.repository.ProductStockStatusRepository;
 import com.aszender.spring_backend.security.JwtAuthenticationFilter;
 import com.aszender.spring_backend.service.ProductService;
 import org.junit.jupiter.api.Test;
@@ -29,6 +30,9 @@ class ProductControllerWebMvcTest {
 
     @MockitoBean
     private JwtAuthenticationFilter jwtAuthenticationFilter;
+
+    @MockitoBean
+    private ProductStockStatusRepository productStockStatusRepository;
 
     @Test
     void getAllProducts_returnsDtoList() throws Exception {

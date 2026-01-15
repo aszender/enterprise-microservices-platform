@@ -1,7 +1,9 @@
 package com.aszender.inventory.kafka.consume;
 
 import com.aszender.inventory.kafka.events.ProductCreatedEvent;
+import com.aszender.inventory.kafka.inbox.KafkaInboxService;
 import com.aszender.inventory.service.InventoryService;
+import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
@@ -15,9 +17,11 @@ public class ProductCreatedListener {
     private static final Logger log = LoggerFactory.getLogger(ProductCreatedListener.class);
 
     private final InventoryService inventoryService;
+    private final KafkaInboxService inboxService;
 
-    public ProductCreatedListener(InventoryService inventoryService) {
+    public ProductCreatedListener(InventoryService inventoryService, KafkaInboxService inboxService) {
         this.inventoryService = inventoryService;
+        this.inboxService = inboxService;
     }
 
     @KafkaListener(
@@ -27,7 +31,11 @@ public class ProductCreatedListener {
                     "spring.json.value.default.type=com.aszender.inventory.kafka.events.ProductCreatedEvent"
             }
     )
-    public void onProductCreated(ProductCreatedEvent event) {
+    public void onProductCreated(ProductCreatedEvent event, ConsumerRecord<String, ProductCreatedEvent> record) {
+        if (!inboxService.tryConsume(record)) {
+            return;
+        }
+
         log.info("Received ProductCreatedEvent: {}", event);
         if (event == null || event.productId() == null) {
             return;
