@@ -1,0 +1,3 @@
+Start: .[dev.sh](http://_vscodecontentref_/3) up
+Check: .[dev.sh](http://_vscodecontentref_/4) status
+Stop: .[dev.sh](http://_vscodecontentref_/5) down

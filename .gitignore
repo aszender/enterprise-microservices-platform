@@ -19,3 +19,7 @@ grpc-complete-guide.md
 .DS_Store
 .idea/
 .vscode/
+
+# Local dev script artifacts
+.run/
+.logs/
