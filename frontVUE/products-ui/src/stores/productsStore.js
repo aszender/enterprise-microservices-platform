@@ -9,6 +9,7 @@ import {
   listProducts,
   updateProduct,
 } from '../api/productsApi'
+import { ensureStock } from '../api/inventoryApi'
 
 // STATE (shared singleton)
 const items = ref([])
@@ -50,7 +51,15 @@ async function save(productPayload) {
       await updateProduct(editingProduct.value.id, productPayload)
       editingProduct.value = null
     } else {
-      await createProduct(productPayload)
+      const created = await createProduct(productPayload)
+      // Best-effort: keep inventory demo in sync even without Kafka.
+      if (created?.id) {
+        try {
+          await ensureStock(created.id)
+        } catch {
+          // ignore inventory sync errors
+        }
+      }
     }
 
     await refresh()

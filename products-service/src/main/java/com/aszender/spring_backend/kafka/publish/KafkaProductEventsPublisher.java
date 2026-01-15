@@ -13,11 +13,11 @@ import java.time.Instant;
 @Profile("kafka")
 public class KafkaProductEventsPublisher implements ProductEventsPublisher {
 
-    private final KafkaTemplate<String, Object> kafkaTemplate;
+    private final KafkaTemplate<Object, Object> kafkaTemplate;
     private final String topic;
 
     public KafkaProductEventsPublisher(
-            KafkaTemplate<String, Object> kafkaTemplate,
+            KafkaTemplate<Object, Object> kafkaTemplate,
             @Value("${app.kafka.topics.product-created:products.product-created.v1}") String topic
     ) {
         this.kafkaTemplate = kafkaTemplate;

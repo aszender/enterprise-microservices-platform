@@ -51,3 +51,8 @@ export async function listStock() {
 export async function getStock(productId) {
   return requestJson(`${getInventoryBaseUrl()}/stock/${productId}`, { method: 'GET' })
 }
+
+// Ensures a default stock record exists for this product (idempotent).
+export async function ensureStock(productId) {
+  return requestJson(`${getInventoryBaseUrl()}/stock/${productId}`, { method: 'POST' })
+}

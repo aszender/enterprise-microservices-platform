@@ -8,6 +8,7 @@ import {
   updateProduct as apiUpdate,
   deleteProduct as apiDelete,
 } from '../api/productsApi'
+import { ensureStock } from '../../inventory/api/inventoryApi'
 
 // Async thunks
 export const fetchProducts = createAsyncThunk('products/fetchAll', async (_, { rejectWithValue }) => {
@@ -20,7 +21,15 @@ export const fetchProducts = createAsyncThunk('products/fetchAll', async (_, { r
 
 export const addProduct = createAsyncThunk('products/add', async (product, { rejectWithValue }) => {
   try {
-    return await apiCreate(product)
+    const created = await apiCreate(product)
+    if (created?.id) {
+      try {
+        await ensureStock(created.id)
+      } catch {
+        // ignore inventory sync errors
+      }
+    }
+    return created
   } catch (err) {
     return rejectWithValue(err.message)
   }

@@ -23,7 +23,12 @@ Usage:
 
 Environment flags:
   WITH_REDIS=1            # also start a local Redis container (optional)
+  WITH_KAFKA=1            # also start Kafka (docker compose) and run backends with kafka profile
   SKIP_NPM_INSTALL=1      # skip npm install checks
+
+Kafka mode notes:
+  - Kafka only affects NEW events (newly created products). Existing products won't backfill stock.
+  - To debug inventory: tail inventory-service.log and look for Kafka connection errors.
 
 Logs:
   ./.logs/<name>.log
@@ -142,6 +147,11 @@ cmd_up() {
   echo "Bringing up Postgres..."
   docker_compose up -d postgres
 
+  if [[ "${WITH_KAFKA:-}" == "1" ]]; then
+    echo "Bringing up Kafka (optional)..."
+    docker_compose up -d kafka
+  fi
+
   if [[ "${WITH_REDIS:-}" == "1" ]]; then
     if ! docker ps --format '{{.Names}}' | grep -qx redis-local; then
       echo "Starting Redis (optional)..."
@@ -152,25 +162,40 @@ cmd_up() {
   fi
 
   echo "Building and installing contracts (local Maven repo)..."
-  "$ROOT_DIR/mvnw" -pl contracts -am clean install -DskipTests
+  "$ROOT_DIR/mvnw" -pl contracts -am install -DskipTests
 
   if port_in_use 8080; then echo "Port 8080 is already in use." >&2; exit 1; fi
   if port_in_use 8081; then echo "Port 8081 is already in use." >&2; exit 1; fi
   if port_in_use 8082; then echo "Port 8082 is already in use." >&2; exit 1; fi
 
-  start_bg products-service "$ROOT_DIR/mvnw" -pl products-service spring-boot:run
-  start_bg inventory-service "$ROOT_DIR/mvnw" -pl inventory-service spring-boot:run
-  start_bg orders-service "$ROOT_DIR/mvnw" -pl orders-service spring-boot:run
+  if [[ "${WITH_KAFKA:-}" == "1" ]]; then
+    start_bg products-service env SPRING_PROFILES_ACTIVE=kafka "$ROOT_DIR/mvnw" -pl products-service spring-boot:run
+    start_bg inventory-service env SPRING_PROFILES_ACTIVE=kafka "$ROOT_DIR/mvnw" -pl inventory-service spring-boot:run
+    start_bg orders-service env SPRING_PROFILES_ACTIVE=kafka "$ROOT_DIR/mvnw" -pl orders-service spring-boot:run
+  else
+    start_bg products-service "$ROOT_DIR/mvnw" -pl products-service spring-boot:run
+    start_bg inventory-service "$ROOT_DIR/mvnw" -pl inventory-service spring-boot:run
+    start_bg orders-service "$ROOT_DIR/mvnw" -pl orders-service spring-boot:run
+  fi
 
   npm_install_if_needed "$ROOT_DIR/frontVUE/products-ui"
   npm_install_if_needed "$ROOT_DIR/frontReact/products-react"
 
-  start_bg vue-ui bash -lc "cd '$ROOT_DIR/frontVUE/products-ui' && npm run dev"
-  start_bg react-ui bash -lc "cd '$ROOT_DIR/frontReact/products-react' && npm run dev"
+  # Source nvm if available so we get the correct Node version
+  local nvm_init=""
+  if [[ -s "$HOME/.nvm/nvm.sh" ]]; then
+    nvm_init="source $HOME/.nvm/nvm.sh && "
+  fi
+
+  start_bg vue-ui bash -c "${nvm_init}cd '$ROOT_DIR/frontVUE/products-ui' && npm run dev"
+  start_bg react-ui bash -c "${nvm_init}cd '$ROOT_DIR/frontReact/products-react' && npm run dev"
 
   echo
   echo "All processes started in the background (no need to run docker ps)."
   echo "Check status with: ./dev.sh status"
+  if [[ "${WITH_KAFKA:-}" == "1" ]]; then
+    echo "Kafka mode is ON. Create a NEW product, then refresh Inventory."
+  fi
   echo "Tail logs with:" 
   echo "  tail -f ./.logs/products-service.log"
   echo "  tail -f ./.logs/orders-service.log"
@@ -193,6 +218,11 @@ cmd_down() {
 
   echo "Stopping Postgres..."
   docker_compose stop postgres >/dev/null 2>&1 || true
+
+  if [[ "${WITH_KAFKA:-}" == "1" ]]; then
+    echo "Stopping Kafka (optional)..."
+    docker_compose stop kafka >/dev/null 2>&1 || true
+  fi
 }
 
 cmd_status() {

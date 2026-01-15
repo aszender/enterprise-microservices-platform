@@ -1,3 +1,22 @@
-Start: .[dev.sh](http://_vscodecontentref_/3) up
-Check: .[dev.sh](http://_vscodecontentref_/4) status
-Stop: .[dev.sh](http://_vscodecontentref_/5) down
+Start: ./dev.sh up
+Check: ./dev.sh status
+Stop: ./dev.sh down
+
+WITH_KAFKA=1 ./dev.sh up
+
+cd /Users/aszender/VSCProyects/java-spring
+WITH_KAFKA=1 ./dev.sh up
+
+SPRING_PROFILES_ACTIVE=kafka ./mvnw spring-boot:run
+
+cd /Users/aszender/VSCProyects/java-spring
+./mvnw -pl contracts -am clean install -DskipTests
+
+cd /Users/aszender/VSCProyects/java-spring
+SPRING_PROFILES_ACTIVE=kafka ./mvnw -pl products-service spring-boot:run
+
+cd /Users/aszender/VSCProyects/java-spring
+SPRING_PROFILES_ACTIVE=kafka ./mvnw -pl inventory-service spring-boot:run
+
+cd /Users/aszender/VSCProyects/java-spring
+SPRING_PROFILES_ACTIVE=kafka ./mvnw -pl orders-service spring-boot:run
