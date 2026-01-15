@@ -2,12 +2,14 @@
 // Root layout with navigation
 
 import { Link, Outlet, useLocation } from 'react-router-dom'
-import { Package, Home, Sparkles } from 'lucide-react'
+import { Package, Home, Sparkles, ShoppingCart, Warehouse } from 'lucide-react'
 import { cn } from '../shared/lib/utils'
 
 const navItems = [
   { to: '/', label: 'Home', icon: Home },
   { to: '/products', label: 'Products', icon: Package },
+  { to: '/orders', label: 'Orders', icon: ShoppingCart },
+  { to: '/inventory', label: 'Inventory', icon: Warehouse },
 ]
 
 export default function Layout() {
