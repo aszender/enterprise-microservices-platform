@@ -4,3 +4,17 @@ Study_Plan.md
 Day3-Day4_Security.md
 Day5_Day6_Kafka.md
 Da7_Final_Review.md
+
+# Build outputs
+**/target/
+**/target/**
+
+# Node
+**/node_modules/
+**/dist/
+**/.vite/
+
+# OS / IDE
+.DS_Store
+.idea/
+.vscode/
