@@ -1,6 +1,6 @@
 // features/products/api/productsApi.js
 // Mirrors the Vue app's API client shape, but in React.
-// Backend: /api/products (see spring-backend ProductController)
+// Backend: /api/products (see products-service ProductController)
 
 import { requestJson } from '../../../shared/api/http'
 

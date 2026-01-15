@@ -1,8 +1,8 @@
 services:
-  spring-backend:
+  products-service:
     build:
-      context: ./spring-backend
-    container_name: spring-backend
+      context: ./products-service
+    container_name: products-service
     environment:
       # Optional: override if you want a different port inside container
       - SERVER_PORT=8080
@@ -11,9 +11,9 @@ services:
 
   nginx:
     image: nginx:1.27-alpine
-    container_name: spring-backend-nginx
+    container_name: products-service-nginx
     depends_on:
-      - spring-backend
+      - products-service
     ports:
       # Public entrypoint: Nginx on host
       - "8080:80"

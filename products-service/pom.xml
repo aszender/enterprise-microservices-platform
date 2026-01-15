@@ -9,9 +9,9 @@
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
 	<groupId>com.aszender</groupId>
-	<artifactId>spring-backend</artifactId>
+	<artifactId>products-service</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
-	<name>spring-backend</name>
+	<name>products-service</name>
 	<description>Demo project for Spring Boot</description>
 	<url/>
 	<licenses>
