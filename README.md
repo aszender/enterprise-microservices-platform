@@ -609,5 +609,4 @@ MIT License
 
 ## 👤 Author
 
-**Andres Zender**  
-Full-Stack Developer | Java • Spring • Vue • React
+**Andres Gonzalez**  
