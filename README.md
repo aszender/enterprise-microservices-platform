@@ -488,6 +488,27 @@ java-spring/
 
 ---
 
+---
+
+## ⚙️ Error Handling, Validation & Logging
+
+### Global Error Handling
+- Centralized with `@RestControllerAdvice` (`GlobalExceptionHandler`)
+- Handles validation errors, not found, bad JSON, data integrity, and unexpected exceptions
+- Returns structured JSON error responses (status, message, path, validation details)
+
+### Validation
+- Uses Jakarta Bean Validation (`@Valid`, `@NotNull`, etc.) on DTOs and controller inputs
+- Automatic validation of incoming requests
+- Validation errors are caught and returned as clear API error responses
+
+### Logging
+- Spring Boot logging enabled (Logback)
+- Log levels set in `application.properties` (`INFO` for root, `DEBUG` for web)
+- All requests, errors, and stack traces are logged for troubleshooting
+
+---
+
 ## 🚀 Future Enhancements
 
 ### Planned Production Deployment
@@ -578,7 +599,7 @@ pipeline {
 - **X-Ray**: Distributed tracing across microservices
 - **Alarms**: Automated alerts for error rates, latency spikes, low disk space
 
----
+
 
 ## 📝 License
 
