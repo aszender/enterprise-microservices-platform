@@ -33,7 +33,7 @@ public class KafkaOrderEventsPublisher implements OrderEventsPublisher {
     public void publishOrderCreated(Order order) {
         OrderCreatedEvent event = new OrderCreatedEvent(
                 order.getId(),
-                order.getCreatedAt(),
+                order.getCreatedAt() == null ? null : order.getCreatedAt().toString(),
                 order.getItems().stream()
                         .map(i -> new OrderItemEvent(i.getProductId(), i.getQuantity()))
                         .toList()
@@ -44,7 +44,7 @@ public class KafkaOrderEventsPublisher implements OrderEventsPublisher {
 
     @Override
     public void publishOrderCancelled(Order order) {
-        OrderCancelledEvent event = new OrderCancelledEvent(order.getId(), Instant.now());
+        OrderCancelledEvent event = new OrderCancelledEvent(order.getId(), Instant.now().toString());
         kafkaTemplate.send(orderCancelledTopic, String.valueOf(order.getId()), event);
     }
 }

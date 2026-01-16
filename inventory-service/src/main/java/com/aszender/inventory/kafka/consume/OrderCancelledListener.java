@@ -53,7 +53,7 @@ public class OrderCancelledListener {
 
         boolean released = inventoryService.releaseReservation(event.orderId());
         if (released) {
-            stockEventsPublisher.publishStockReleased(new StockReleasedEvent(event.orderId(), Instant.now()));
+            stockEventsPublisher.publishStockReleased(new StockReleasedEvent(event.orderId(), Instant.now().toString()));
         }
     }
 }

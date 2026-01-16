@@ -108,7 +108,7 @@ public class InventoryController {
     public ResponseEntity<ReleaseResponse> release(@PathVariable Long orderId) {
         boolean released = inventoryService.releaseReservation(orderId);
         if (released) {
-            stockEventsPublisher.publishStockReleased(new StockReleasedEvent(orderId, Instant.now()));
+            stockEventsPublisher.publishStockReleased(new StockReleasedEvent(orderId, Instant.now().toString()));
         }
         return ResponseEntity.ok(new ReleaseResponse(released));
     }

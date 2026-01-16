@@ -51,7 +51,7 @@ public class InventoryReservationOrchestrator {
         if (reserved) {
             stockEventsPublisher.publishStockReserved(new StockReservedEvent(
                     orderId,
-                    Instant.now(),
+                    Instant.now().toString(),
                     items.stream()
                             .map(i -> new OrderItemEvent(i.productId(), i.quantity()))
                             .toList()
@@ -75,7 +75,7 @@ public class InventoryReservationOrchestrator {
                                 productId,
                                 availableAfter,
                                 lowStockThreshold,
-                                Instant.now()
+                                Instant.now().toString()
                         ));
                     }
                 });
@@ -86,7 +86,7 @@ public class InventoryReservationOrchestrator {
 
         stockEventsPublisher.publishStockReservationFailed(new StockReservationFailedEvent(
                 orderId,
-                Instant.now(),
+                Instant.now().toString(),
                 "INSUFFICIENT_STOCK"
         ));
 

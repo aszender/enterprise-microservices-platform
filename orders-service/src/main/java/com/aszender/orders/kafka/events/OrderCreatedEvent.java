@@ -1,11 +1,10 @@
 package com.aszender.orders.kafka.events;
 
-import java.time.Instant;
 import java.util.List;
 
 public record OrderCreatedEvent(
         Long orderId,
-        Instant createdAt,
+        String createdAt,
         List<OrderItemEvent> items
 ) {
 }
