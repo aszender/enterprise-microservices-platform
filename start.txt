@@ -4,6 +4,8 @@ Stop: ./dev.sh down
 
 WITH_KAFKA=1 ./dev.sh up
 
+sudo killall -9 Docker && sleep 3 && open -a Docker
+
 cd /Users/aszender/VSCProyects/java-spring
 WITH_KAFKA=1 ./dev.sh up
 

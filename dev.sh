@@ -153,12 +153,8 @@ cmd_up() {
   fi
 
   if [[ "${WITH_REDIS:-}" == "1" ]]; then
-    if ! docker ps --format '{{.Names}}' | grep -qx redis-local; then
-      echo "Starting Redis (optional)..."
-      docker run -d --name redis-local -p 6379:6379 redis:7-alpine >/dev/null
-    else
-      echo "Redis already running: redis-local"
-    fi
+    echo "Bringing up Redis (optional)..."
+    docker_compose up -d redis
   fi
 
   echo "Building and installing contracts (local Maven repo)..."
@@ -168,10 +164,24 @@ cmd_up() {
   if port_in_use 8081; then echo "Port 8081 is already in use." >&2; exit 1; fi
   if port_in_use 8082; then echo "Port 8082 is already in use." >&2; exit 1; fi
 
+  # Build Spring profiles string based on flags
+  local profiles=""
   if [[ "${WITH_KAFKA:-}" == "1" ]]; then
-    start_bg products-service env SPRING_PROFILES_ACTIVE=kafka "$ROOT_DIR/mvnw" -pl products-service spring-boot:run
-    start_bg inventory-service env SPRING_PROFILES_ACTIVE=kafka "$ROOT_DIR/mvnw" -pl inventory-service spring-boot:run
-    start_bg orders-service env SPRING_PROFILES_ACTIVE=kafka "$ROOT_DIR/mvnw" -pl orders-service spring-boot:run
+    profiles="kafka"
+  fi
+  if [[ "${WITH_REDIS:-}" == "1" ]]; then
+    if [[ -n "$profiles" ]]; then
+      profiles="$profiles,redis"
+    else
+      profiles="redis"
+    fi
+  fi
+
+  if [[ -n "$profiles" ]]; then
+    echo "Starting backends with profiles: $profiles"
+    start_bg products-service env SPRING_PROFILES_ACTIVE="$profiles" "$ROOT_DIR/mvnw" -pl products-service spring-boot:run
+    start_bg inventory-service env SPRING_PROFILES_ACTIVE="$profiles" "$ROOT_DIR/mvnw" -pl inventory-service spring-boot:run
+    start_bg orders-service env SPRING_PROFILES_ACTIVE="$profiles" "$ROOT_DIR/mvnw" -pl orders-service spring-boot:run
   else
     start_bg products-service "$ROOT_DIR/mvnw" -pl products-service spring-boot:run
     start_bg inventory-service "$ROOT_DIR/mvnw" -pl inventory-service spring-boot:run
@@ -196,6 +206,9 @@ cmd_up() {
   if [[ "${WITH_KAFKA:-}" == "1" ]]; then
     echo "Kafka mode is ON. Create a NEW product, then refresh Inventory."
   fi
+  if [[ "${WITH_REDIS:-}" == "1" ]]; then
+    echo "Redis caching is ON. Check keys: docker exec -it redis-local redis-cli keys '*'"
+  fi
   echo "Tail logs with:" 
   echo "  tail -f ./.logs/products-service.log"
   echo "  tail -f ./.logs/orders-service.log"
@@ -211,18 +224,10 @@ cmd_down() {
   stop_bg inventory-service
   stop_bg products-service
 
-  if [[ "${WITH_REDIS:-}" == "1" ]]; then
-    docker stop redis-local >/dev/null 2>&1 || true
-    docker rm redis-local >/dev/null 2>&1 || true
-  fi
-
-  echo "Stopping Postgres..."
+  echo "Stopping Docker containers..."
+  docker_compose stop redis >/dev/null 2>&1 || true
   docker_compose stop postgres >/dev/null 2>&1 || true
-
-  if [[ "${WITH_KAFKA:-}" == "1" ]]; then
-    echo "Stopping Kafka (optional)..."
-    docker_compose stop kafka >/dev/null 2>&1 || true
-  fi
+  docker_compose stop kafka >/dev/null 2>&1 || true
 }
 
 cmd_status() {
