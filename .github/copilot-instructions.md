@@ -1,31 +1,63 @@
-# Java + Spring + Frontend Learning Repo (AI Agent Guide)
 
-This repo is a learning workspace for Java/Spring interview prep (Jan 2026). It’s a monorepo with multiple small projects; changes should stay simple and demo-focused.
+# Java + Spring + Frontend Monorepo (AI Agent Guide)
 
-## Repo Map (what lives where)
-- Java fundamentals + OOP demos: [App.java](../App.java) + [basic/](../basic/)
-- Spring Boot REST API (Products): [products-service/](../products-service/)
-- Vue 3 UI that talks to Spring API via Vite proxy: [frontVUE/products-ui/](../frontVUE/products-ui/)
-- React Vite starter (currently template): [frontReact/products-react/](../frontReact/products-react/)
-- Vanilla JS/TS practice scripts: [frontVainilla/](../frontVainilla/)
+This monorepo is a hands-on learning platform for Java/Spring, modern frontend, and microservices. It is intentionally split into small, focused projects for interview prep and demo clarity.
 
-## Key Data Flow (Products app)
-- Backend endpoints: [ProductController](../products-service/src/main/java/com/aszender/spring_backend/controller/ProductController.java)
-  - Base path: `/api/products` (CRUD + `/search?keyword=...`)
-- Vue UI calls the API through a tiny fetch client: [productsApi.js](../frontVUE/products-ui/src/api/productsApi.js)
-  - Dev proxy lives in: [vite.config.js](../frontVUE/products-ui/vite.config.js) (`/api` → `http://localhost:8080`)
-- Error shape comes from: [GlobalExceptionHandler](../products-service/src/main/java/com/aszender/spring_backend/exception/GlobalExceptionHandler.java)
+## Architecture Overview
+- **Java Demos:** Core Java/OOP concepts in [App.java](../App.java) and [basic/](../basic/). Each concept is isolated in its own method/class for clarity.
+- **Spring Boot Services:**
+  - [products-service/](../products-service/): REST API for products (CRUD, search, stock status)
+  - [orders-service/](../orders-service/), [inventory-service/](../inventory-service/): Additional microservices (see docker-compose)
+- **Frontend UIs:**
+  - [frontVUE/products-ui/](../frontVUE/products-ui/): Vue 3 app, fetches from Spring API via Vite proxy
+  - [frontReact/products-react/](../frontReact/products-react/): React Vite starter (minimal, for practice)
+  - [frontVainilla/](../frontVainilla/): Vanilla JS/TS scripts for fundamentals
+- **Integration:**
+  - Services communicate via REST (see controller endpoints)
+  - Kafka and Redis integration is demoed via profiles and docker-compose
+  - Dev workflow is containerized (see [dev.sh](../dev.sh), [docker-compose.yml](../docker-compose.yml))
 
-## Workflows (per subproject)
-- Java demos (root): `javac App.java basic/*.java && java App`
-- Spring backend: `cd products-service && ./mvnw spring-boot:run` (Java 17, Spring Boot 4)
-- Spring tests: `cd products-service && ./mvnw test` (currently just `contextLoads`)
-- Vue UI: `cd frontVUE/products-ui && npm install && npm run dev`
-- React UI: `cd frontReact/products-react && npm install && npm run dev`
+## Key Data Flows & Patterns
+- **Products API:**
+  - Endpoints: [ProductController.java](../products-service/src/main/java/com/aszender/spring_backend/controller/ProductController.java) (`/api/products`)
+  - Error responses: [GlobalExceptionHandler.java](../products-service/src/main/java/com/aszender/spring_backend/exception/GlobalExceptionHandler.java)
+  - DTO mapping: Use `toDto`/`toEntity` helpers inside controllers (do not expose JPA entities)
+- **Vue UI:**
+  - API client: [productsApi.js](../frontVUE/products-ui/src/api/productsApi.js)
+  - State: Singleton store ([productsStore.js](../frontVUE/products-ui/src/stores/productsStore.js)), not Pinia
+  - Dev proxy: [vite.config.js](../frontVUE/products-ui/vite.config.js) (proxies `/api` to backend)
+- **Spring Profiles:**
+  - Use `SPRING_PROFILES_ACTIVE=kafka` for Kafka integration
+  - Use `SPRING_PROFILES_ACTIVE=redis` for Redis cache
+  - Default profile uses in-memory H2 (see [application.properties](../products-service/src/main/resources/application.properties))
 
-## Conventions to follow (project-specific)
-- Java demo code in [basic/JavaCore.java](../basic/JavaCore.java): keep concepts isolated in small private methods and call them from `executeValues()`.
-- OOP demos use nested inner classes in [basic/oop.java](../basic/oop.java) (instantiate like `new oop().new Dog(...)` from [App.java](../App.java)).
-- Spring REST layer uses DTOs + mapping helpers inside the controller (see `toDto` / `toEntity` in ProductController) instead of returning JPA entities directly.
-- Spring uses in-memory H2 by default (see [application.properties](../products-service/src/main/resources/application.properties)); keep changes compatible with that.
-- Vue UI state is centralized in a small singleton store (no Pinia): [productsStore.js](../frontVUE/products-ui/src/stores/productsStore.js) + composable [useProducts.js](../frontVUE/products-ui/src/composables/useProducts.js).
+## Developer Workflows
+- **Start all services:** `./dev.sh up` (add `WITH_KAFKA=1` or `WITH_REDIS=1` for extra services)
+- **Stop all services:** `./dev.sh down`
+- **Check status:** `./dev.sh status`
+- **Build Java demos:** `javac App.java basic/*.java && java App`
+- **Run Spring backend:** `cd products-service && ./mvnw spring-boot:run`
+- **Run Vue UI:** `cd frontVUE/products-ui && npm install && npm run dev`
+- **Run React UI:** `cd frontReact/products-react && npm install && npm run dev`
+- **Run Spring tests:** `cd products-service && ./mvnw test`
+- **Build contracts (protobuf):** `cd contracts && ./mvnw clean install -DskipTests`
+
+## Project-Specific Conventions
+- **Java demos:**
+  - Each concept in its own method/class ([basic/JavaCore.java](../basic/JavaCore.java))
+  - OOP demos use nested classes ([basic/oop.java](../basic/oop.java)), instantiate via `new oop().new Dog(...)`
+- **Spring REST:**
+  - Always use DTOs for API responses/requests
+  - Map entities <-> DTOs with static helpers in controller
+- **Frontend:**
+  - Vue state is a singleton store, not Pinia
+  - API calls are centralized in `/src/api/`
+- **Integration:**
+  - Use Vite proxy for local frontend-backend communication
+  - Use profiles and docker-compose for optional Kafka/Redis
+
+## References
+- [README.md](../README.md): High-level goals and study plan
+- [start.txt](../start.txt): Common dev commands and profiles
+
+Keep all changes simple, demo-focused, and compatible with in-memory H2 unless otherwise required.
