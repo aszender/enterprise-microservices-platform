@@ -1,4 +1,4 @@
-# 🚀 Enterprise Microservices Platform
+# Enterprise Microservices Platform
 
 > **Full-Stack Demo**: Java 17 + Spring Boot 3 + gRPC + Kafka + Redis + PostgreSQL + Vue 3 + React 18
 
@@ -15,7 +15,7 @@ A production-ready microservices architecture demonstrating **enterprise pattern
 
 ---
 
-## 📋 Table of Contents
+## Table of Contents
 
 - [Architecture Overview](#-architecture-overview)
 - [Key Design Decisions](#-key-design-decisions)
@@ -30,7 +30,7 @@ A production-ready microservices architecture demonstrating **enterprise pattern
 
 ---
 
-## 🏗 Architecture Overview
+## Architecture Overview
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐
@@ -99,7 +99,7 @@ A production-ready microservices architecture demonstrating **enterprise pattern
 
 ---
 
-## 🎯 Key Design Decisions
+## Key Design Decisions
 
 ### Why This Architecture?
 
@@ -129,7 +129,7 @@ A production-ready microservices architecture demonstrating **enterprise pattern
 
 ---
 
-## 🛠 Tech Stack
+## Tech Stack
 
 ### Backend
 
@@ -166,7 +166,7 @@ A production-ready microservices architecture demonstrating **enterprise pattern
 
 ---
 
-## 📦 Service Breakdown
+## Service Breakdown
 
 ### 1. Products Service (Port 8080)
 
@@ -254,7 +254,7 @@ message ReserveStockResponse {
 
 ---
 
-## 🔄 Communication Patterns
+## Communication Patterns
 
 ### Pattern 1: Synchronous (gRPC) - Stock Reservation
 
@@ -299,7 +299,7 @@ Second request: Cache HIT  → Return from Redis (microseconds)
 
 ---
 
-## 🚀 Quick Start
+## Quick Start
 
 ### Prerequisites
 
@@ -345,7 +345,7 @@ WITH_KAFKA=1 WITH_REDIS=1 ./dev.sh up
 
 ---
 
-## 📖 API Documentation
+## API Documentation
 
 ### Authentication Flow
 
@@ -388,7 +388,7 @@ curl http://localhost:8081/api/orders/1
 
 ---
 
-## 🧪 Testing Strategy
+## Testing Strategy
 
 ### Test Pyramid Implementation
 
@@ -453,7 +453,7 @@ cd products-service && ./mvnw test
 
 ---
 
-## 🖥 Frontend Applications
+## Frontend Applications
 
 ### Vue 3 (`frontVUE/products-ui`)
 
@@ -470,7 +470,7 @@ cd products-service && ./mvnw test
 - Pages: Products, Orders, Inventory
 
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 java-spring/
@@ -490,7 +490,7 @@ java-spring/
 
 ---
 
-## ⚙️ Error Handling, Validation & Logging
+## Error Handling, Validation & Logging
 
 ### Global Error Handling
 - Centralized with `@RestControllerAdvice` (`GlobalExceptionHandler`)
@@ -509,7 +509,7 @@ java-spring/
 
 ---
 
-## 🚀 Future Enhancements
+## Future Enhancements
 
 ### Planned Production Deployment
 
