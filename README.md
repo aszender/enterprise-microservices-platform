@@ -13,6 +13,19 @@ A production-ready microservices architecture demonstrating **enterprise pattern
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-4169E1?logo=postgresql)](https://www.postgresql.org/)
 [![gRPC](https://img.shields.io/badge/gRPC-Sync%20Communication-244c5a)](https://grpc.io/)
 
+## Purpose of This Project
+
+This repository is a **demonstration system**, not a production-ready platform.
+
+Its purpose is to showcase:
+- Microservice decomposition and service boundaries
+- Event-driven communication using Kafka
+- Independent frontend ownership (React and Vue)
+- Data consistency and failure considerations in distributed systems
+
+Trade-offs such as infrastructure hardening, security depth, and full observability
+are intentionally simplified to keep the focus on architectural concepts.
+
 ---
 
 ## Table of Contents
@@ -31,6 +44,86 @@ A production-ready microservices architecture demonstrating **enterprise pattern
 ---
 
 ## Architecture Overview
+
+## Why Microservices (Instead of a Modular Monolith)
+
+This system is intentionally split into microservices to demonstrate:
+- Independent data ownership per service
+- Asynchronous communication via Kafka
+- Eventual consistency between domains
+- Failure isolation at service boundaries
+
+In a real production system with this scope, a modular monolith could be sufficient.
+Microservices were chosen here **solely to demonstrate distributed-system concerns**
+commonly discussed in senior backend interviews.
+
+## Why Kafka Is Used
+
+Kafka is used to demonstrate:
+- Event-driven architecture
+- Loose coupling between services
+- Asynchronous propagation of domain events
+- Replayability and auditability of state changes
+
+Kafka is **not** used for simple request/response workflows. Synchronous REST is
+reserved for query-style interactions, while state changes are propagated through events.
+
+## Domain Events
+
+Each service emits domain events that represent **facts**, not commands.
+
+Examples:
+- OrderCreated
+- InventoryReserved
+- ProductPriceUpdated
+
+Rules:
+- Events are immutable
+- Events describe something that already happened
+- Consumers must be idempotent
+
+## Failure Handling & Consistency Model
+
+This system assumes:
+- At-least-once delivery from Kafka
+- Eventual consistency between services
+- Idempotent consumers to avoid duplicate processing
+
+Failure scenarios considered:
+- Consumer restart and replay
+- Temporary Kafka unavailability
+- Partial service outages
+
+Compensation is preferred over distributed transactions. No two-phase commit is used.
+
+## Why Two Frontends (React & Vue)
+
+Two frontends exist to demonstrate:
+- Independent UI ownership per domain
+- Technology-agnostic backend APIs
+- Parallel evolution of user interfaces
+
+In production, standardizing on one framework may be preferable. Here, diversity is
+intentional to show backend resilience to UI changes.
+
+## Deliberate Omissions
+
+To keep the scope focused, this project intentionally omits:
+- Centralized authentication/authorization
+- Distributed tracing and metrics
+- Advanced schema registry enforcement
+- Production-grade security hardening
+
+These concerns are well-understood but excluded to avoid obscuring the core architectural demonstrations.
+
+## Minimal Code-Level Improvements (Optional)
+
+These small, focused improvements add senior-level signals without bloating the codebase:
+- Add idempotency checks (or comments) in Kafka consumers
+- Add `eventVersion` to events for evolution and compatibility
+- Explicitly state `service-owned database` rule in README
+- Add an ASCII event-flow diagram showing producers → topics → consumers
+
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐
