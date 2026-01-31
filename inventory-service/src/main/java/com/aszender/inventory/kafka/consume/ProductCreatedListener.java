@@ -32,7 +32,12 @@ public class ProductCreatedListener {
             }
     )
     public void onProductCreated(ProductCreatedEvent event, ConsumerRecord<String, ProductCreatedEvent> record) {
+        // Idempotency guard: use inbox pattern to avoid double-processing when Kafka
+        // delivers messages more than once (at-least-once semantics).
+        // If the message was already processed, log and skip.
         if (!inboxService.tryConsume(record)) {
+            log.info("Duplicate ProductCreatedEvent ignored: topic={} partition={} offset={}",
+                    record.topic(), record.partition(), record.offset());
             return;
         }
 
@@ -40,6 +45,17 @@ public class ProductCreatedListener {
         if (event == null || event.productId() == null) {
             return;
         }
-        inventoryService.ensureStockItemExists(event.productId());
+
+        // Trade-off comment: we intentionally avoid distributed transactions here.
+        // Compensation and idempotency are preferred over coordination in this demo.
+        try {
+            inventoryService.ensureStockItemExists(event.productId());
+        } catch (Exception ex) {
+            // Failure handling: record the failure and surface it via logs/alerts.
+            // In a fuller system we'd publish a failed-event or push to a DLQ for manual review.
+            log.error("Failed to ensure stock item for productId={}: {}", event.productId(), ex.getMessage(), ex);
+            // Domain decision example: mark the operation for retry by leaving the inbox entry absent
+            // or by pushing a compensating message. Here we simply log to make the failure explicit.
+        }
     }
 }
