@@ -22,7 +22,7 @@ fix-docker.sh
 **/.vite/
 
 # OS / IDE
-.DS_Store
+**/.DS_Store
 .idea/
 .vscode/
 
