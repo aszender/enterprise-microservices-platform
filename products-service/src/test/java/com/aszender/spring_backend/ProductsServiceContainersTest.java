@@ -11,7 +11,10 @@ import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.utility.DockerImageName;
 
-@SpringBootTest
+@SpringBootTest(properties = {
+    "spring.flyway.enabled=true",
+    "spring.jpa.hibernate.ddl-auto=validate"
+})
 @Testcontainers(disabledWithoutDocker = true)
 @ActiveProfiles({"test", "redis"})
 class ProductsServiceContainersTest {
@@ -25,8 +28,6 @@ class ProductsServiceContainersTest {
 
     @DynamicPropertySource
     static void registerProperties(DynamicPropertyRegistry registry) {
-        registry.add("spring.flyway.enabled", () -> true);
-        registry.add("spring.jpa.hibernate.ddl-auto", () -> "validate");
         registry.add("spring.datasource.url", postgres::getJdbcUrl);
         registry.add("spring.datasource.username", postgres::getUsername);
         registry.add("spring.datasource.password", postgres::getPassword);
