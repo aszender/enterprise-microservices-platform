@@ -1,7 +1,7 @@
 package com.aszender.spring_backend.service;
 
 import com.aszender.spring_backend.exception.ProductNotFoundException;
-import com.aszender.spring_backend.kafka.publish.ProductEventsPublisher;
+import com.aszender.spring_backend.kafka.outbox.service.ProductOutboxService;
 import com.aszender.spring_backend.model.Product;
 import com.aszender.spring_backend.repository.ProductRepository;
 import org.springframework.cache.annotation.CacheEvict;
@@ -12,19 +12,20 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.support.TransactionSynchronization;
-import org.springframework.transaction.support.TransactionSynchronizationManager;
+import org.springframework.transaction.annotation.Transactional;
+
 import java.util.List;
 import java.util.Optional;
 
 @Service
 public class ProductService {
-    private final ProductRepository productRepository;
-    private final ProductEventsPublisher productEventsPublisher;
 
-    public ProductService(ProductRepository productRepository, ProductEventsPublisher productEventsPublisher) {
+    private final ProductRepository productRepository;
+    private final ProductOutboxService productOutboxService;
+
+    public ProductService(ProductRepository productRepository, ProductOutboxService productOutboxService) {
         this.productRepository = productRepository;
-        this.productEventsPublisher = productEventsPublisher;
+        this.productOutboxService = productOutboxService;
     }
 
     @Cacheable(cacheNames = "productsAll", key = "'all'")
@@ -45,6 +46,7 @@ public class ProductService {
         return productRepository.findById(id);
     }
 
+    @Transactional
     @Caching(
             put = @CachePut(cacheNames = "productsById", key = "#result.id", unless = "#result == null || #result.id == null"),
             evict = {
@@ -57,17 +59,7 @@ public class ProductService {
         Product saved = productRepository.save(product);
 
         if (isNew) {
-            // Publish only after the transaction commits, so we don't emit events for rolled-back writes.
-            if (TransactionSynchronizationManager.isActualTransactionActive()) {
-                TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
-                    @Override
-                    public void afterCommit() {
-                        productEventsPublisher.publishProductCreated(saved);
-                    }
-                });
-            } else {
-                productEventsPublisher.publishProductCreated(saved);
-            }
+            productOutboxService.enqueueProductCreated(saved);
         }
 
         return saved;

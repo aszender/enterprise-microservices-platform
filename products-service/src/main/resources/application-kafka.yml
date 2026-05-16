@@ -20,3 +20,5 @@ app:
       product-created: ${PRODUCT_CREATED_TOPIC:products.product-created.v1}
       order-created: ${ORDER_CREATED_TOPIC:orders.order-created.v1}
       low-stock: ${LOW_STOCK_TOPIC:inventory.low-stock.v1}
+    outbox:
+      poll-delay-ms: ${OUTBOX_POLL_DELAY_MS:5000}

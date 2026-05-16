@@ -1,6 +1,7 @@
 package com.aszender.spring_backend.service;
 
 import com.aszender.spring_backend.exception.ProductNotFoundException;
+import com.aszender.spring_backend.kafka.outbox.service.ProductOutboxService;
 import com.aszender.spring_backend.model.Product;
 import com.aszender.spring_backend.repository.ProductRepository;
 import org.junit.jupiter.api.Test;
@@ -23,12 +24,40 @@ class ProductServiceTest {
     @Mock
     private ProductRepository productRepository;
 
+    @Mock
+    private ProductOutboxService productOutboxService;
+
     @InjectMocks
     private ProductService productService;
 
     @Test
+    void save_newProduct_enqueuesToOutbox() {
+        Product product = new Product("Widget", "A widget", BigDecimal.valueOf(9.99));
+        Product saved = new Product("Widget", "A widget", BigDecimal.valueOf(9.99));
+        saved.setId(1L);
+
+        when(productRepository.save(product)).thenReturn(saved);
+
+        Product result = productService.save(product);
+
+        assertThat(result.getId()).isEqualTo(1L);
+        verify(productOutboxService).enqueueProductCreated(saved);
+    }
+
+    @Test
+    void save_existingProduct_doesNotEnqueueOutbox() {
+        Product product = new Product("Widget", "A widget", BigDecimal.valueOf(9.99));
+        product.setId(42L);
+
+        when(productRepository.save(product)).thenReturn(product);
+
+        productService.save(product);
+
+        verifyNoInteractions(productOutboxService);
+    }
+
+    @Test
     void updateProduct_updatesFieldsAndSaves() {
-        // Arrange
         Long id = 10L;
         Product existing = new Product("Old", "Old desc", BigDecimal.valueOf(1.00));
         existing.setId(id);
@@ -38,10 +67,8 @@ class ProductServiceTest {
         when(productRepository.findById(id)).thenReturn(Optional.of(existing));
         when(productRepository.save(any(Product.class))).thenAnswer(inv -> inv.getArgument(0));
 
-        // Act
         Product result = productService.updateProduct(id, update);
 
-        // Assert
         ArgumentCaptor<Product> captor = ArgumentCaptor.forClass(Product.class);
         verify(productRepository).save(captor.capture());
         Product saved = captor.getValue();
@@ -50,20 +77,18 @@ class ProductServiceTest {
         assertThat(saved.getName()).isEqualTo("New");
         assertThat(saved.getDescription()).isEqualTo("New desc");
         assertThat(saved.getPrice()).isEqualByComparingTo(BigDecimal.valueOf(99.99));
-
         assertThat(result.getName()).isEqualTo("New");
+
         verify(productRepository).findById(id);
         verifyNoMoreInteractions(productRepository);
     }
 
     @Test
     void updateProduct_whenNotFound_throwsProductNotFoundException() {
-        // Arrange
         Long id = 999L;
         Product update = new Product("New", "New desc", BigDecimal.valueOf(99.99));
         when(productRepository.findById(id)).thenReturn(Optional.empty());
 
-        // Act + Assert
         assertThatThrownBy(() -> productService.updateProduct(id, update))
                 .isInstanceOf(ProductNotFoundException.class);
 
