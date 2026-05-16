@@ -1,6 +1,6 @@
 # Enterprise Microservices Platform
 
-Production-oriented Java/Spring Boot 4 microservices reference implementation. Demonstrates distributed transactions, event-driven consistency, transactional outbox, Kafka retry/DLQ, concurrency-safe inventory, and reproducible integration tests — patterns that matter in real production systems.
+Production-oriented Java/Spring Boot 4 microservices reference implementation focused on distributed transactions, event-driven consistency, transactional outbox, Kafka retry/DLQ, concurrency-safe inventory, and reproducible integration tests.
 
 ---
 

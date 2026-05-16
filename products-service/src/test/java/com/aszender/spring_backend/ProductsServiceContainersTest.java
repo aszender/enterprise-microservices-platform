@@ -11,10 +11,7 @@ import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.utility.DockerImageName;
 
-@SpringBootTest(properties = {
-    "spring.flyway.enabled=true",
-    "spring.jpa.hibernate.ddl-auto=validate"
-})
+@SpringBootTest
 @Testcontainers(disabledWithoutDocker = true)
 @ActiveProfiles({"test", "redis"})
 class ProductsServiceContainersTest {
