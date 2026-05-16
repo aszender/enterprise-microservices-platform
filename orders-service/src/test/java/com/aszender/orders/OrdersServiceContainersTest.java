@@ -11,7 +11,7 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.kafka.KafkaContainer;
 import org.testcontainers.utility.DockerImageName;
 
-@SpringBootTest
+@SpringBootTest(properties = {"spring.flyway.enabled=false"})
 @Testcontainers(disabledWithoutDocker = true)
 @ActiveProfiles({"test", "kafka"})
 class OrdersServiceContainersTest {
@@ -24,11 +24,9 @@ class OrdersServiceContainersTest {
 
     @DynamicPropertySource
     static void registerProperties(DynamicPropertyRegistry registry) {
-        registry.add("spring.flyway.enabled", () -> true);
-        registry.add("spring.jpa.hibernate.ddl-auto", () -> "validate");
-        registry.add("ORDERS_DATASOURCE_URL", postgres::getJdbcUrl);
-        registry.add("ORDERS_DATASOURCE_USERNAME", postgres::getUsername);
-        registry.add("ORDERS_DATASOURCE_PASSWORD", postgres::getPassword);
+        registry.add("spring.datasource.url", postgres::getJdbcUrl);
+        registry.add("spring.datasource.username", postgres::getUsername);
+        registry.add("spring.datasource.password", postgres::getPassword);
         registry.add("KAFKA_BOOTSTRAP_SERVERS", kafka::getBootstrapServers);
     }
 
