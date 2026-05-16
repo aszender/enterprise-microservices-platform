@@ -26,10 +26,10 @@ class InventoryServiceContainersTest {
     static void registerProperties(DynamicPropertyRegistry registry) {
         registry.add("spring.flyway.enabled", () -> true);
         registry.add("spring.jpa.hibernate.ddl-auto", () -> "validate");
-        registry.add("INVENTORY_DATASOURCE_URL", postgres::getJdbcUrl);
-        registry.add("INVENTORY_DATASOURCE_USERNAME", postgres::getUsername);
-        registry.add("INVENTORY_DATASOURCE_PASSWORD", postgres::getPassword);
-        registry.add("KAFKA_BOOTSTRAP_SERVERS", kafka::getBootstrapServers);
+        registry.add("spring.datasource.url", postgres::getJdbcUrl);
+        registry.add("spring.datasource.username", postgres::getUsername);
+        registry.add("spring.datasource.password", postgres::getPassword);
+        registry.add("spring.kafka.bootstrap-servers", kafka::getBootstrapServers);
     }
 
     @Test

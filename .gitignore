@@ -11,6 +11,11 @@ DB/
 basic/
 fix-docker.sh
 
+# Keep service database migrations versioned.
+!**/src/main/resources/db/
+!**/src/main/resources/db/migration/
+!**/src/main/resources/db/migration/*.sql
+
 
 # Build outputs
 **/target/
