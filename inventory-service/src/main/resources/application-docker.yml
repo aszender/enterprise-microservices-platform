@@ -1,0 +1,12 @@
+spring:
+  datasource:
+    url: ${INVENTORY_DATASOURCE_URL:jdbc:postgresql://postgres:5432/inventory_db}
+    username: ${INVENTORY_DATASOURCE_USERNAME}
+    password: ${INVENTORY_DATASOURCE_PASSWORD}
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+
+server:
+  port: ${INVENTORY_SERVER_PORT:${SERVER_PORT:8082}}

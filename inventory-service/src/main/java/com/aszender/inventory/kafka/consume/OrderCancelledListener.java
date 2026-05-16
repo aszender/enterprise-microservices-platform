@@ -42,18 +42,28 @@ public class OrderCancelledListener {
             }
     )
     public void onOrderCancelled(OrderCancelledEvent event, ConsumerRecord<String, OrderCancelledEvent> record) {
-        if (!inboxService.tryConsume(record)) {
+        KafkaInboxService.ProcessingDecision decision = inboxService.beginProcessing(
+                record,
+                event == null ? null : new KafkaInboxService.EventMetadata(event.eventId(), event.eventType(), event.eventVersion())
+        );
+        if (!decision.shouldProcess()) {
             return;
         }
 
-        log.info("Received OrderCancelledEvent: {}", event);
-        if (event == null || event.orderId() == null) {
-            return;
-        }
+        try {
+            log.info("Received OrderCancelledEvent: {}", event);
+            if (event == null || event.orderId() == null) {
+                throw new IllegalArgumentException("OrderCancelledEvent payload.orderId is required");
+            }
 
-        boolean released = inventoryService.releaseReservation(event.orderId());
-        if (released) {
-            stockEventsPublisher.publishStockReleased(new StockReleasedEvent(event.orderId(), Instant.now().toString()));
+            boolean released = inventoryService.releaseReservation(event.orderId());
+            if (released) {
+                stockEventsPublisher.publishStockReleased(new StockReleasedEvent(event.orderId(), Instant.now().toString()));
+            }
+            inboxService.markProcessed(record);
+        } catch (RuntimeException ex) {
+            inboxService.markFailed(record, ex);
+            throw ex;
         }
     }
 }

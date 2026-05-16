@@ -8,7 +8,9 @@ import com.aszender.inventory.repository.StockReservationRepository;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.interceptor.TransactionAspectSupport;
 
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -36,7 +38,7 @@ public class InventoryService {
     }
 
     @Transactional
-    public boolean reserveStock(Long orderId, java.util.List<ReservationLine> lines) {
+    public boolean reserveStock(Long orderId, List<ReservationLine> lines) {
         if (orderId == null) {
             throw new IllegalArgumentException("orderId is required");
         }
@@ -50,24 +52,13 @@ public class InventoryService {
             return existing.get().getStatus() == ReservationStatus.RESERVED;
         }
 
-        // Validate all stock exists and is sufficient BEFORE mutating.
-        for (ReservationLine line : lines) {
-            StockItem stockItem = stockItemRepository.findByProductId(line.productId())
-                    .orElse(null);
-            if (stockItem == null) {
-                return false;
-            }
-            if (stockItem.getAvailable() < line.quantity()) {
-                return false;
-            }
-        }
-
-        // Apply reservations
         StockReservation reservation = new StockReservation(orderId);
         for (ReservationLine line : lines) {
-            StockItem stockItem = stockItemRepository.findByProductId(line.productId())
-                    .orElseThrow();
-            stockItem.reserve(line.quantity());
+            int updated = stockItemRepository.reserveAvailable(line.productId(), line.quantity());
+            if (updated != 1) {
+                TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+                return false;
+            }
             reservation.addItem(line.productId(), line.quantity());
         }
 
@@ -91,13 +82,24 @@ public class InventoryService {
             return true;
         }
 
-        reservation.getItems().forEach(item -> {
-            StockItem stockItem = stockItemRepository.findByProductId(item.getProductId())
-                    .orElseThrow();
-            stockItem.releaseReserved(item.getQuantity());
-        });
+        List<ReservationLine> reservedLines = reservation.getItems().stream()
+                .map(item -> new ReservationLine(item.getProductId(), item.getQuantity()))
+                .toList();
 
-        reservation.release();
+        int markedReleased = stockReservationRepository.markReleasedIfReserved(orderId);
+        if (markedReleased != 1) {
+            return stockReservationRepository.findByOrderId(orderId)
+                    .map(existing -> existing.getStatus() == ReservationStatus.RELEASED)
+                    .orElse(false);
+        }
+
+        for (ReservationLine line : reservedLines) {
+            int updated = stockItemRepository.releaseReserved(line.productId(), line.quantity());
+            if (updated != 1) {
+                TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+                return false;
+            }
+        }
         return true;
     }
 

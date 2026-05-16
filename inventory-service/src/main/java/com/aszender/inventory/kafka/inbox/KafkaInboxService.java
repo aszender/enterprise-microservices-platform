@@ -14,20 +14,87 @@ public class KafkaInboxService {
     }
 
     @Transactional
-    public boolean tryConsume(ConsumerRecord<?, ?> record) {
+    public ProcessingDecision beginProcessing(ConsumerRecord<?, ?> record) {
+        return beginProcessing(record, null);
+    }
+
+    @Transactional
+    public ProcessingDecision beginProcessing(ConsumerRecord<?, ?> record, EventMetadata metadata) {
         if (record == null) {
-            return true;
+            return ProcessingDecision.process();
         }
 
-        String topic = record.topic();
-        int partitionId = record.partition();
-        long offsetValue = record.offset();
+        KafkaInboxMessage message = repository.findByTopicAndPartitionIdAndOffsetValue(
+                        record.topic(),
+                        record.partition(),
+                        record.offset()
+                )
+                .orElse(null);
 
-        if (repository.existsByTopicAndPartitionIdAndOffsetValue(topic, partitionId, offsetValue)) {
-            return false;
+        if (message != null) {
+            if (message.getStatus() == KafkaInboxStatus.PROCESSED) {
+                return ProcessingDecision.duplicateProcessedDecision();
+            }
+
+            message.markProcessing();
+            return ProcessingDecision.process();
         }
 
-        repository.save(new KafkaInboxMessage(topic, partitionId, offsetValue));
-        return true;
+        message = new KafkaInboxMessage(
+                record.topic(),
+                record.partition(),
+                record.offset(),
+                metadata == null ? null : metadata.eventId(),
+                metadata == null ? null : metadata.eventType(),
+                metadata == null ? null : metadata.eventVersion()
+        );
+        message.markProcessing();
+        repository.save(message);
+        return ProcessingDecision.process();
+    }
+
+    @Transactional
+    public void markProcessed(ConsumerRecord<?, ?> record) {
+        if (record == null) {
+            return;
+        }
+
+        KafkaInboxMessage message = findRequired(record);
+        message.markProcessed();
+    }
+
+    @Transactional
+    public void markFailed(ConsumerRecord<?, ?> record, Throwable failure) {
+        if (record == null) {
+            return;
+        }
+
+        KafkaInboxMessage message = findRequired(record);
+        message.markFailed(failure);
+    }
+
+    private KafkaInboxMessage findRequired(ConsumerRecord<?, ?> record) {
+        return repository.findByTopicAndPartitionIdAndOffsetValue(
+                        record.topic(),
+                        record.partition(),
+                        record.offset()
+                )
+                .orElseThrow(() -> new IllegalStateException(
+                        "Kafka inbox message not found for topic=%s partition=%d offset=%d"
+                                .formatted(record.topic(), record.partition(), record.offset())
+                ));
+    }
+
+    public record ProcessingDecision(boolean shouldProcess, boolean duplicateProcessed) {
+        static ProcessingDecision process() {
+            return new ProcessingDecision(true, false);
+        }
+
+        static ProcessingDecision duplicateProcessedDecision() {
+            return new ProcessingDecision(false, true);
+        }
+    }
+
+    public record EventMetadata(String eventId, String eventType, Integer eventVersion) {
     }
 }

@@ -8,6 +8,11 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
+import java.math.BigDecimal;
+
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -27,14 +32,31 @@ class ProductCreatedListenerTest {
 
     @Test
     void whenInboxReturnsFalse_shouldNotCallInventoryService() {
-        // ProductCreatedEvent(productId: Long, name: String, price: Double, createdAt: String)
-        ProductCreatedEvent event = new ProductCreatedEvent(1L, "name", 9.99, "2026-01-01T00:00:00Z");
+        ProductCreatedEvent event = new ProductCreatedEvent(1L, "name", new BigDecimal("9.99"), "2026-01-01T00:00:00Z");
         ConsumerRecord<String, ProductCreatedEvent> record = new ConsumerRecord<>("topic", 0, 100L, "key", event);
 
-        when(inboxService.tryConsume(record)).thenReturn(false);
+        when(inboxService.beginProcessing(eq(record), any()))
+                .thenReturn(new KafkaInboxService.ProcessingDecision(false, true));
 
         listener.onProductCreated(event, record);
 
         verify(inventoryService, never()).ensureStockItemExists(1L);
+        verify(inboxService, never()).markProcessed(record);
+    }
+
+    @Test
+    void whenBusinessFails_shouldMarkFailedAndRethrow() {
+        ProductCreatedEvent event = new ProductCreatedEvent(1L, "name", new BigDecimal("9.99"), "2026-01-01T00:00:00Z");
+        ConsumerRecord<String, ProductCreatedEvent> record = new ConsumerRecord<>("topic", 0, 100L, "key", event);
+        RuntimeException failure = new RuntimeException("database unavailable");
+
+        when(inboxService.beginProcessing(eq(record), any()))
+                .thenReturn(new KafkaInboxService.ProcessingDecision(true, false));
+        when(inventoryService.ensureStockItemExists(1L)).thenThrow(failure);
+
+        assertThrows(RuntimeException.class, () -> listener.onProductCreated(event, record));
+
+        verify(inboxService).markFailed(record, failure);
+        verify(inboxService, never()).markProcessed(record);
     }
 }

@@ -1,0 +1,63 @@
+spring:
+  application:
+    name: products-service
+  profiles:
+    default: local
+  cache:
+    type: simple
+  data:
+    redis:
+      repositories:
+        enabled: false
+  datasource:
+    url: ${PRODUCTS_DATASOURCE_URL}
+    username: ${PRODUCTS_DATASOURCE_USERNAME}
+    password: ${PRODUCTS_DATASOURCE_PASSWORD}
+  flyway:
+    enabled: true
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: false
+  h2:
+    console:
+      enabled: false
+
+server:
+  port: ${PRODUCTS_SERVER_PORT:${SERVER_PORT:8080}}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus
+  endpoint:
+    health:
+      probes:
+        enabled: true
+  prometheus:
+    metrics:
+      export:
+        enabled: true
+  tracing:
+    sampling:
+      probability: ${TRACING_SAMPLING_PROBABILITY:1.0}
+  otlp:
+    tracing:
+      endpoint: ${OTEL_EXPORTER_OTLP_ENDPOINT:http://localhost:4318/v1/traces}
+
+jwt:
+  secret: ${JWT_SECRET}
+  expiration: ${JWT_EXPIRATION_MS:86400000}
+
+logging:
+  pattern:
+    level: "%5p [traceId=%X{traceId:-} spanId=%X{spanId:-} correlationId=%X{correlationId:-}]"
+  level:
+    root: INFO
+    org.springframework.web: INFO
+    org.hibernate.SQL: INFO

@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.*;
 
 import jakarta.validation.Valid;
 
+import java.math.BigDecimal;
 import java.net.URI;
 import java.util.Map;
 import java.util.List;
@@ -22,6 +23,8 @@ import java.util.Objects;
 @RestController
 @RequestMapping("/api/products")
 public class ProductController {
+
+    private static final BigDecimal MIN_PRICE = new BigDecimal("0.01");
 
     private final ProductService productService;
     private final ProductStockStatusRepository stockStatusRepository;
@@ -39,6 +42,23 @@ public class ProductController {
         Product product = new Product(dto.name(), dto.description(), dto.price());
         product.setId(id);
         return product;
+    }
+
+    private static BigDecimal parsePrice(Object rawPrice) {
+        BigDecimal price;
+        if (rawPrice instanceof Number number) {
+            price = new BigDecimal(number.toString());
+        } else if (rawPrice instanceof String text) {
+            price = new BigDecimal(text);
+        } else {
+            throw new IllegalArgumentException("price must be a decimal number");
+        }
+
+        if (price.compareTo(MIN_PRICE) < 0) {
+            throw new IllegalArgumentException("price must be >= 0.01");
+        }
+
+        return price;
     }
 
     // GET all products
@@ -174,10 +194,7 @@ public class ProductController {
                         product.setDescription((String) updates.get("description"));
                     }
                     if (updates.containsKey("price")) {
-                        Object rawPrice = updates.get("price");
-                        if (rawPrice instanceof Number number) {
-                            product.setPrice(number.doubleValue());
-                        }
+                        product.setPrice(parsePrice(updates.get("price")));
                     }
 
                     Product saved = productService.save(product);

@@ -3,32 +3,31 @@ package com.aszender.orders.service;
 import com.aszender.orders.dto.CreateOrderRequest;
 import com.aszender.orders.exception.OrderNotFoundException;
 import com.aszender.orders.inventory.GrpcInventoryClient;
-import com.aszender.orders.kafka.publish.OrderEventsPublisher;
+import com.aszender.orders.kafka.outbox.service.OrderOutboxService;
 import com.aszender.orders.model.Order;
 import com.aszender.orders.model.OrderItem;
 import com.aszender.orders.model.OrderStatus;
 import com.aszender.orders.repository.OrderRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.transaction.support.TransactionSynchronization;
-import org.springframework.transaction.support.TransactionSynchronizationManager;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 @Service
 public class OrderService {
 
     private final OrderRepository orderRepository;
-    private final OrderEventsPublisher orderEventsPublisher;
+    private final OrderOutboxService orderOutboxService;
     private final GrpcInventoryClient inventoryClient;
 
     public OrderService(
             OrderRepository orderRepository,
-            OrderEventsPublisher orderEventsPublisher,
+            OrderOutboxService orderOutboxService,
             GrpcInventoryClient inventoryClient
     ) {
         this.orderRepository = orderRepository;
-        this.orderEventsPublisher = orderEventsPublisher;
+        this.orderOutboxService = orderOutboxService;
         this.inventoryClient = inventoryClient;
     }
 
@@ -44,37 +43,26 @@ public class OrderService {
     public Order create(CreateOrderRequest request) {
         Order order = new Order(request.customerName());
 
-        double total = 0.0;
+        BigDecimal total = BigDecimal.ZERO;
         for (var itemReq : request.items()) {
             if (itemReq.quantity() == null || itemReq.quantity() <= 0) {
                 throw new IllegalArgumentException("quantity must be >= 1");
             }
-            if (itemReq.unitPrice() == null || itemReq.unitPrice() < 0) {
+            if (itemReq.unitPrice() == null || itemReq.unitPrice().compareTo(BigDecimal.ZERO) < 0) {
                 throw new IllegalArgumentException("unitPrice must be >= 0");
             }
 
             OrderItem item = new OrderItem(itemReq.productId(), itemReq.quantity(), itemReq.unitPrice());
             order.addItem(item);
 
-            total += itemReq.quantity() * itemReq.unitPrice();
+            total = total.add(itemReq.unitPrice().multiply(BigDecimal.valueOf(itemReq.quantity())));
         }
 
         order.setTotal(total);
         order.setStatus(OrderStatus.CREATED);
 
         Order saved = orderRepository.save(order);
-
-        // Publish only after the transaction commits, so we don't emit events for rolled-back writes.
-        if (TransactionSynchronizationManager.isActualTransactionActive()) {
-            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
-                @Override
-                public void afterCommit() {
-                    orderEventsPublisher.publishOrderCreated(saved);
-                }
-            });
-        } else {
-            orderEventsPublisher.publishOrderCreated(saved);
-        }
+        orderOutboxService.enqueueOrderCreated(saved);
 
         return saved;
     }
@@ -122,15 +110,6 @@ public class OrderService {
             return;
         }
 
-        if (TransactionSynchronizationManager.isActualTransactionActive()) {
-            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
-                @Override
-                public void afterCommit() {
-                    orderEventsPublisher.publishOrderCancelled(saved);
-                }
-            });
-        } else {
-            orderEventsPublisher.publishOrderCancelled(saved);
-        }
+        orderOutboxService.enqueueOrderCancelled(saved);
     }
 }

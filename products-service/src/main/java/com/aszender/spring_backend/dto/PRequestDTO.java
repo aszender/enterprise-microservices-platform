@@ -1,12 +1,15 @@
 package com.aszender.spring_backend.dto;
 
+import jakarta.validation.constraints.DecimalMin;
+import jakarta.validation.constraints.Digits;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Positive;
+
+import java.math.BigDecimal;
 
 public record PRequestDTO(
         @NotBlank String name,
         String description,
-        @NotNull @Positive Double price
+        @NotNull @DecimalMin(value = "0.01") @Digits(integer = 15, fraction = 4) BigDecimal price
 ) {
 }

@@ -29,9 +29,16 @@ public class StockReservedListener {
             }
     )
     public void onStockReserved(StockReservedEvent event, ConsumerRecord<String, StockReservedEvent> record) {
-        if (!inboxService.tryConsume(record)) {
+        KafkaInboxService.ProcessingDecision decision = inboxService.beginProcessing(record);
+        if (!decision.shouldProcess()) {
             return;
         }
-        log.info("Received StockReservedEvent: {}", event);
+        try {
+            log.info("Received StockReservedEvent: orderId={}", event == null ? null : event.orderId());
+            inboxService.markProcessed(record);
+        } catch (RuntimeException ex) {
+            inboxService.markFailed(record, ex);
+            throw ex;
+        }
     }
 }

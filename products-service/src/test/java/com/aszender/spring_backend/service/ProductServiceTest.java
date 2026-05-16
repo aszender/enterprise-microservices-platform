@@ -10,6 +10,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.math.BigDecimal;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -29,10 +30,10 @@ class ProductServiceTest {
     void updateProduct_updatesFieldsAndSaves() {
         // Arrange
         Long id = 10L;
-        Product existing = new Product("Old", "Old desc", 1.0);
+        Product existing = new Product("Old", "Old desc", BigDecimal.valueOf(1.00));
         existing.setId(id);
 
-        Product update = new Product("New", "New desc", 99.99);
+        Product update = new Product("New", "New desc", BigDecimal.valueOf(99.99));
 
         when(productRepository.findById(id)).thenReturn(Optional.of(existing));
         when(productRepository.save(any(Product.class))).thenAnswer(inv -> inv.getArgument(0));
@@ -48,7 +49,7 @@ class ProductServiceTest {
         assertThat(saved.getId()).isEqualTo(id);
         assertThat(saved.getName()).isEqualTo("New");
         assertThat(saved.getDescription()).isEqualTo("New desc");
-        assertThat(saved.getPrice()).isEqualTo(99.99);
+        assertThat(saved.getPrice()).isEqualByComparingTo(BigDecimal.valueOf(99.99));
 
         assertThat(result.getName()).isEqualTo("New");
         verify(productRepository).findById(id);
@@ -59,7 +60,7 @@ class ProductServiceTest {
     void updateProduct_whenNotFound_throwsProductNotFoundException() {
         // Arrange
         Long id = 999L;
-        Product update = new Product("New", "New desc", 99.99);
+        Product update = new Product("New", "New desc", BigDecimal.valueOf(99.99));
         when(productRepository.findById(id)).thenReturn(Optional.empty());
 
         // Act + Assert

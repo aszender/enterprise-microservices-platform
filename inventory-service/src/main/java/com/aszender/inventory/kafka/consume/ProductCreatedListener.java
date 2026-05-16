@@ -32,30 +32,29 @@ public class ProductCreatedListener {
             }
     )
     public void onProductCreated(ProductCreatedEvent event, ConsumerRecord<String, ProductCreatedEvent> record) {
-        // Idempotency guard: use inbox pattern to avoid double-processing when Kafka
-        // delivers messages more than once (at-least-once semantics).
-        // If the message was already processed, log and skip.
-        if (!inboxService.tryConsume(record)) {
+        KafkaInboxService.ProcessingDecision decision = inboxService.beginProcessing(
+                record,
+                event == null ? null : new KafkaInboxService.EventMetadata(event.eventId(), event.eventType(), event.eventVersion())
+        );
+        if (!decision.shouldProcess()) {
             log.info("Duplicate ProductCreatedEvent ignored: topic={} partition={} offset={}",
                     record.topic(), record.partition(), record.offset());
             return;
         }
 
-        log.info("Received ProductCreatedEvent: {}", event);
-        if (event == null || event.productId() == null) {
-            return;
-        }
-
-        // Trade-off comment: we intentionally avoid distributed transactions here.
-        // Compensation and idempotency are preferred over coordination in this demo.
+        Long productId = event == null ? null : event.productId();
         try {
-            inventoryService.ensureStockItemExists(event.productId());
-        } catch (Exception ex) {
-            // Failure handling: record the failure and surface it via logs/alerts.
-            // In a fuller system we'd publish a failed-event or push to a DLQ for manual review.
-            log.error("Failed to ensure stock item for productId={}: {}", event.productId(), ex.getMessage(), ex);
-            // Domain decision example: mark the operation for retry by leaving the inbox entry absent
-            // or by pushing a compensating message. Here we simply log to make the failure explicit.
+            log.info("Received ProductCreatedEvent: {}", event);
+            if (productId == null) {
+                throw new IllegalArgumentException("ProductCreatedEvent payload.productId is required");
+            }
+
+            inventoryService.ensureStockItemExists(productId);
+            inboxService.markProcessed(record);
+        } catch (RuntimeException ex) {
+            log.error("Failed to ensure stock item for productId={}: {}", productId, ex.getMessage(), ex);
+            inboxService.markFailed(record, ex);
+            throw ex;
         }
     }
 }

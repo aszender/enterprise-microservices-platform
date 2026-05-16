@@ -12,6 +12,7 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 import static org.mockito.Mockito.when;
@@ -37,9 +38,9 @@ class ProductControllerWebMvcTest {
     @Test
     void getAllProducts_returnsDtoList() throws Exception {
         // Arrange
-        Product p1 = new Product("Laptop", "Work machine", 1200.0);
+        Product p1 = new Product("Laptop", "Work machine", BigDecimal.valueOf(1200.00));
         p1.setId(1L);
-        Product p2 = new Product("Mouse", "Wireless", 25.0);
+        Product p2 = new Product("Mouse", "Wireless", BigDecimal.valueOf(25.00));
         p2.setId(2L);
 
         when(productService.findAll()).thenReturn(List.of(p1, p2));

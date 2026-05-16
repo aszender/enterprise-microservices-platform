@@ -1,0 +1,20 @@
+spring:
+  datasource:
+    url: ${ORDERS_DATASOURCE_URL:jdbc:postgresql://postgres:5432/orders_db}
+    username: ${ORDERS_DATASOURCE_USERNAME}
+    password: ${ORDERS_DATASOURCE_PASSWORD}
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+
+server:
+  port: ${ORDERS_SERVER_PORT:${SERVER_PORT:8081}}
+
+app:
+  inventory:
+    base-url: ${INVENTORY_BASE_URL:http://inventory-service:8082}
+  grpc:
+    inventory:
+      host: ${INVENTORY_GRPC_HOST:inventory-service}
+      port: ${INVENTORY_GRPC_PORT:9090}

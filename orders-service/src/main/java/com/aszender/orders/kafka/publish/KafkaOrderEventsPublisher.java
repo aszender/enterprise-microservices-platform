@@ -33,9 +33,11 @@ public class KafkaOrderEventsPublisher implements OrderEventsPublisher {
     public void publishOrderCreated(Order order) {
         OrderCreatedEvent event = new OrderCreatedEvent(
                 order.getId(),
+                order.getCustomerName(),
+                order.getTotal(),
                 order.getCreatedAt() == null ? null : order.getCreatedAt().toString(),
                 order.getItems().stream()
-                        .map(i -> new OrderItemEvent(i.getProductId(), i.getQuantity()))
+                        .map(i -> new OrderItemEvent(i.getProductId(), i.getQuantity(), i.getUnitPrice()))
                         .toList()
         );
 

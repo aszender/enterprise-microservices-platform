@@ -28,10 +28,20 @@ public class StockReservationFailedListener {
                     "spring.json.value.default.type=com.aszender.orders.kafka.events.StockReservationFailedEvent"
             }
     )
-    public void onStockReservationFailed(StockReservationFailedEvent event, ConsumerRecord<String, StockReservationFailedEvent> record) {
-        if (!inboxService.tryConsume(record)) {
+    public void onStockReservationFailed(StockReservationFailedEvent event,
+                                         ConsumerRecord<String, StockReservationFailedEvent> record) {
+        KafkaInboxService.ProcessingDecision decision = inboxService.beginProcessing(record);
+        if (!decision.shouldProcess()) {
             return;
         }
-        log.info("Received StockReservationFailedEvent: {}", event);
+        try {
+            log.info("Received StockReservationFailedEvent: orderId={}, reason={}",
+                    event == null ? null : event.orderId(),
+                    event == null ? null : event.reason());
+            inboxService.markProcessed(record);
+        } catch (RuntimeException ex) {
+            inboxService.markFailed(record, ex);
+            throw ex;
+        }
     }
 }

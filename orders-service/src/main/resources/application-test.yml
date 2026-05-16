@@ -1,0 +1,17 @@
+spring:
+  datasource:
+    url: jdbc:h2:mem:orders_test;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DEFAULT_NULL_ORDERING=HIGH
+    username: orders_test
+    password: orders_test
+  flyway:
+    enabled: false
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: false
+  h2:
+    console:
+      enabled: false
+
+jwt:
+  secret: ${JWT_SECRET:bG9jYWwtZGV2LW9ubHktand0LXNlY3JldC0zMi1ieXRlcw==}

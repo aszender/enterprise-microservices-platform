@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -20,8 +21,8 @@ class ProductRepositoryTest {
     @Test
     void findByNameContainingIgnoreCase_returnsMatchingProducts() {
         // Arrange
-        Product p1 = new Product("Laptop", "Work machine", 1200.0);
-        Product p2 = new Product("Mouse", "Wireless", 25.0);
+        Product p1 = new Product("Laptop", "Work machine", BigDecimal.valueOf(1200.00));
+        Product p2 = new Product("Mouse", "Wireless", BigDecimal.valueOf(25.00));
         productRepository.saveAll(List.of(p1, p2));
 
         // Act
@@ -36,8 +37,8 @@ class ProductRepositoryTest {
     @Test
     void findbyaLetter_returnsMatchingProducts() {
         // Arrange
-        Product p1 = new Product("Camera", "DSLR", 500.0);
-        Product p2 = new Product("Phone", "Android", 800.0);
+        Product p1 = new Product("Camera", "DSLR", BigDecimal.valueOf(500.00));
+        Product p2 = new Product("Phone", "Android", BigDecimal.valueOf(800.00));
         productRepository.saveAll(List.of(p1, p2));
 
         // Act

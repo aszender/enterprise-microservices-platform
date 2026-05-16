@@ -1,0 +1,31 @@
+spring:
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      properties:
+        spring.json.add.type.headers: false
+    consumer:
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      auto-offset-reset: earliest
+      properties:
+        spring.json.trusted.packages: "*"
+        spring.json.use.type.headers: false
+
+app:
+  kafka:
+    retry:
+      max-attempts: ${KAFKA_RETRY_MAX_ATTEMPTS:3}
+      interval-ms: ${KAFKA_RETRY_INTERVAL_MS:1000}
+    dlq:
+      suffix: ${KAFKA_DLQ_SUFFIX:.DLQ}
+    topics:
+      product-created: ${PRODUCT_CREATED_TOPIC:products.product-created.v1}
+      order-created: ${ORDER_CREATED_TOPIC:orders.order-created.v1}
+      order-cancelled: ${ORDER_CANCELLED_TOPIC:orders.order-cancelled.v1}
+      stock-reserved: ${STOCK_RESERVED_TOPIC:inventory.stock-reserved.v1}
+      stock-released: ${STOCK_RELEASED_TOPIC:inventory.stock-released.v1}
+      stock-reservation-failed: ${STOCK_RESERVATION_FAILED_TOPIC:inventory.stock-reservation-failed.v1}
+      low-stock: ${LOW_STOCK_TOPIC:inventory.low-stock.v1}

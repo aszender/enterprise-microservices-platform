@@ -23,6 +23,10 @@ public class StockItem {
     @Column(nullable = false)
     private int reserved;
 
+    @Version
+    @Column(nullable = false)
+    private long version;
+
     @Column(name = "created_at", nullable = false)
     private Instant createdAt = Instant.now();
 
@@ -49,6 +53,10 @@ public class StockItem {
 
     public int getReserved() {
         return reserved;
+    }
+
+    public long getVersion() {
+        return version;
     }
 
     public Instant getCreatedAt() {

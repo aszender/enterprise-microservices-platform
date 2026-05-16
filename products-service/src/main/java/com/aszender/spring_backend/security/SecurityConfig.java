@@ -91,6 +91,8 @@ public class SecurityConfig {
                 // Public endpoints - no authentication required
                 .requestMatchers("/h2-console/**").permitAll()
                 .requestMatchers("/api/auth/**").permitAll()  // Login & Register
+                .requestMatchers(HttpMethod.GET, "/health").permitAll()
+                .requestMatchers(HttpMethod.GET, "/actuator/health", "/actuator/info", "/actuator/prometheus").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/products/**").permitAll()
                 
                 // Protected endpoints - JWT required

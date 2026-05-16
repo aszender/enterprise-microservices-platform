@@ -2,6 +2,7 @@ package com.aszender.orders.model;
 
 import jakarta.persistence.*;
 
+import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
@@ -21,8 +22,8 @@ public class Order {
     @Column(nullable = false)
     private OrderStatus status = OrderStatus.CREATED;
 
-    @Column(nullable = false)
-    private Double total;
+    @Column(nullable = false, precision = 19, scale = 4)
+    private BigDecimal total;
 
     @Column(nullable = false, updatable = false)
     private Instant createdAt = Instant.now();
@@ -35,7 +36,7 @@ public class Order {
 
     public Order(String customerName) {
         this.customerName = customerName;
-        this.total = 0.0;
+        this.total = BigDecimal.ZERO;
     }
 
     public Long getId() {
@@ -62,11 +63,11 @@ public class Order {
         this.status = status;
     }
 
-    public Double getTotal() {
+    public BigDecimal getTotal() {
         return total;
     }
 
-    public void setTotal(Double total) {
+    public void setTotal(BigDecimal total) {
         this.total = total;
     }
 

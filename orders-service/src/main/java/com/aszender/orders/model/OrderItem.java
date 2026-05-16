@@ -2,6 +2,8 @@ package com.aszender.orders.model;
 
 import jakarta.persistence.*;
 
+import java.math.BigDecimal;
+
 @Entity
 @Table(name = "order_items")
 public class OrderItem {
@@ -20,13 +22,13 @@ public class OrderItem {
     @Column(nullable = false)
     private Integer quantity;
 
-    @Column(nullable = false)
-    private Double unitPrice;
+    @Column(nullable = false, precision = 19, scale = 4)
+    private BigDecimal unitPrice;
 
     protected OrderItem() {
     }
 
-    public OrderItem(Long productId, Integer quantity, Double unitPrice) {
+    public OrderItem(Long productId, Integer quantity, BigDecimal unitPrice) {
         this.productId = productId;
         this.quantity = quantity;
         this.unitPrice = unitPrice;
@@ -60,11 +62,11 @@ public class OrderItem {
         this.quantity = quantity;
     }
 
-    public Double getUnitPrice() {
+    public BigDecimal getUnitPrice() {
         return unitPrice;
     }
 
-    public void setUnitPrice(Double unitPrice) {
+    public void setUnitPrice(BigDecimal unitPrice) {
         this.unitPrice = unitPrice;
     }
 }
